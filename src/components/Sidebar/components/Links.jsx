@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { FaAngleRight } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
-import useToggleSidebar from 'store/ToggleSidebar';
+import useToggleSidebar from 'store/toggleSidebar';
 
 const showAnimation = {
   hidden: {
