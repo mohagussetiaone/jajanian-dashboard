@@ -1,149 +1,116 @@
-import { useEffect, useState } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import {
+  useAuthCheck,
+  authLoader,
+  useAuthValidation,
+} from './store/Auth/customHooks.jsx';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  redirect,
+  useLoaderData,
+} from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import Dashboard from 'pages/Dashboard/ECommerce';
+import CategoryProduct from 'views/Products/Category';
+import ProductList from 'views/Products/Product';
+import Layout from './layouts/layouts';
 
-import Loader from './common/Loader';
-import PageTitle from './components/PageTitle';
-import SignIn from './pages/Authentication/SignIn';
-import SignUp from './pages/Authentication/SignUp';
-import Calendar from './pages/Calendar';
-import Chart from './pages/Chart';
-import ECommerce from './pages/Dashboard/ECommerce';
-import FormElements from './pages/Form/FormElements';
-import FormLayout from './pages/Form/FormLayout';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
-import Tables from './pages/Tables';
-import Alerts from './pages/UiElements/Alerts';
-import Buttons from './pages/UiElements/Buttons';
+// Auth
+import SignIn from 'views/Auth/SignIn';
+import SignUp from 'views/Auth/SignUp';
+import ResetPassword from 'views/Auth/ResetPassword';
+import NotFound from 'views/NotFound';
 
-function App() {
-  const [loading, setLoading] = useState(true);
-  const { pathname } = useLocation();
+const router = createBrowserRouter([
+  {
+    path: '/',
+    loader: authLoader,
+    element: <Layout />,
+    children: [
+      {
+        path: '/dashboard',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <Dashboard authToken={authToken} />;
+        },
+      },
+      {
+        path: '/category-product',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <CategoryProduct authToken={authToken} />;
+        },
+      },
+      {
+        path: '/product-list',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <ProductList authToken={authToken} />;
+        },
+      },
+    ],
+  },
+  {
+    path: '/signin',
+    loader: authLoader,
+    Component: SignIn,
+  },
+  {
+    path: '/signup',
+    loader: authLoader,
+    Component: SignUp,
+  },
+  { path: '/reset-password', loader: authLoader, Component: ResetPassword },
+  {
+    path: '*',
+    element: <NotFound />,
+  },
+]);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+const MINUTE = 1000 * 60;
 
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * MINUTE,
+      gcTime: 10 * MINUTE,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      retryOnMount: false,
+    },
+  },
+});
 
-  return loading ? (
-    <Loader />
-  ) : (
+export default function App() {
+  return (
     <>
-      <Routes>
-        <Route
-          index
-          element={
-            <>
-              <PageTitle title="eCommerce Dashboard | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <ECommerce />
-            </>
-          }
+      <QueryClientProvider client={queryClient}>
+        <Toaster
+          position="top-center"
+          reverseOrder={false}
+          gutter={8}
+          containerClassName=""
+          containerStyle={{}}
+          toastOptions={{
+            className: '',
+            duration: 1450,
+            style: {
+              background: '#ffff',
+              color: '#1577d6',
+            },
+          }}
         />
-        <Route
-          path="/calendar"
-          element={
-            <>
-              <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Calendar />
-            </>
-          }
+        <RouterProvider router={router} />
+        <ReactQueryDevtools
+          initialIsOpen={false}
+          buttonPosition="bottom-left"
         />
-        <Route
-          path="/profile"
-          element={
-            <>
-              <PageTitle title="Profile | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Profile />
-            </>
-          }
-        />
-        <Route
-          path="/forms/form-elements"
-          element={
-            <>
-              <PageTitle title="Form Elements | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <FormElements />
-            </>
-          }
-        />
-        <Route
-          path="/forms/form-layout"
-          element={
-            <>
-              <PageTitle title="Form Layout | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <FormLayout />
-            </>
-          }
-        />
-        <Route
-          path="/tables"
-          element={
-            <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Tables />
-            </>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <>
-              <PageTitle title="Settings | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Settings />
-            </>
-          }
-        />
-        <Route
-          path="/chart"
-          element={
-            <>
-              <PageTitle title="Basic Chart | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Chart />
-            </>
-          }
-        />
-        <Route
-          path="/ui/alerts"
-          element={
-            <>
-              <PageTitle title="Alerts | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Alerts />
-            </>
-          }
-        />
-        <Route
-          path="/ui/buttons"
-          element={
-            <>
-              <PageTitle title="Buttons | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <Buttons />
-            </>
-          }
-        />
-        <Route
-          path="/auth/signin"
-          element={
-            <>
-              <PageTitle title="Signin | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <SignIn />
-            </>
-          }
-        />
-        <Route
-          path="/auth/signup"
-          element={
-            <>
-              <PageTitle title="Signup | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-              <SignUp />
-            </>
-          }
-        />
-      </Routes>
+      </QueryClientProvider>
     </>
   );
 }
-
-export default App;
