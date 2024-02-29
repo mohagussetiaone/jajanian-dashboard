@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { routes } from 'routes';
 import { AnimatePresence, motion } from 'framer-motion';
-import useToggleSidebar from 'store/ToggleSidebar';
+import useToggleSidebar from 'store/toggleSidebar';
 import SidebarLinks from './components/Links.jsx';
 import LogoJajanian from 'assets/logo/Jajanian.png';
 import { HiArrowLeft, HiChevronRight } from 'react-icons/hi';
