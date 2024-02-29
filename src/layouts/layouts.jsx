@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLoaderData, useLocation } from 'react-router-dom';
 import { routes } from '../routes';
-import Sidebar from '../components/sidebar/index';
+import Sidebar from 'components/sidebar';
 import Header from 'components/Header';
 import Footer from 'components/footer';
 
