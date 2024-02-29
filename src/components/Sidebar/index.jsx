@@ -10,7 +10,7 @@ const determineInitialSidebarState = () => {
   return window.innerWidth > 1024;
 };
 
-const Sidebar = ({ open, onClose }) => {
+const index = ({ open, onClose }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     determineInitialSidebarState(),
   );
@@ -112,4 +112,4 @@ const Sidebar = ({ open, onClose }) => {
   );
 };
 
-export default Sidebar;
+export default index;
