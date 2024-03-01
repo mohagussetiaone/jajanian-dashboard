@@ -1,14 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import supabase from 'config/supabaseClient';
+import { remove } from 'store/Local/Forage';
 import {
   RiUser3Line,
   RiContactsBookLine,
   RiSettings4Line,
 } from 'react-icons/ri';
 import UserOne from '../../images/user/user-01.png';
+import ModalLogout from './ModalLogout';
+import toast from 'react-hot-toast';
 
 const DropdownUser = () => {
+  const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [modalLogout, setModalLogout] = useState(false);
 
   const trigger = useRef(null);
   const dropdown = useRef(null);
@@ -38,6 +44,25 @@ const DropdownUser = () => {
     document.addEventListener('keydown', keyHandler);
     return () => document.removeEventListener('keydown', keyHandler);
   });
+
+  const modalLogoutClose = () => {
+    setDropdownOpen(false);
+    setModalLogout(false);
+  };
+
+  const logout = async (e) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase.auth.signOut();
+      remove('userTokens');
+      navigate('/signin');
+      if (error) {
+        toast.error('Logout gagal. silahkan coba kembali.');
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div className="relative my-1">
@@ -97,9 +122,19 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        <button className="flex justify-center border-t mt-4 items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out text-red-400 hover:text-red-600 hover:bg-red-100/50 lg:text-base">
+        <button
+          className="flex justify-center border-t mt-4 items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out text-red-400 hover:text-red-600 hover:bg-red-100/50 lg:text-base"
+          onClick={() => setModalLogout(true)}
+        >
           Log Out
         </button>
+        {modalLogout && (
+          <ModalLogout
+            modalLogout={modalLogout}
+            modalLogoutClose={modalLogoutClose}
+            logout={logout}
+          />
+        )}
       </div>
     </div>
   );

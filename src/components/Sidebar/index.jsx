@@ -29,21 +29,26 @@ const index = ({ open, onClose }) => {
     <>
       <motion.div
         className={`sm:none duration-175 linear fixed !z-50 flex min-h-full flex-col bg-white pb-10 shadow-2xl shadow-white/5 transition-all md:!z-50 md:hidden lg:!z-50 xl:!z-0 dark:bg-navy-800 dark:text-white ${
-          open ? 'translate-x-0' : '-translate-x-96'
+          open ? 'translate-x-0 w-[80%]' : '-translate-x-96'
         }`}
       >
         <span
-          className="absolute right-4 top-4 block cursor-pointer md:hidden"
+          className="absolute right-2 md:right-4 top-4 block cursor-pointer md:hidden"
           onClick={onClose}
         >
-          <HiArrowLeft className="w-4 h-4" />
+          <HiArrowLeft className="w-6 h-6" />
         </span>
-        <div className={`mx-[56px] mt-[50px] flex items-center`}>
-          <div className="ml-1 mt-1 h-2.5 font-poppins text-[26px] font-bold uppercase text-navy-700 dark:text-white">
-            <img src={LogoJajanian} alt="logo.png" className="max-w-[190px]" />
+        <div className={`mx-[50px] mt-4 flex items-center`}>
+          <div className="flex gap-3 ml-1 mt-1 h-2.5 font-poppins text-[26px] font-bold text-navy-700 dark:text-white">
+            <img
+              src={LogoJajanian}
+              alt="logo.png"
+              className="w-[40px] h-[40px]"
+            />
+            <h3>Jajanian</h3>
           </div>
         </div>
-        <div className="mb-7 mt-[58px] h-px bg-gray-300 dark:bg-white/30" />
+        <div className="mb-7 mt-[50px] h-px bg-gray-300 dark:bg-white/30" />
         <ul className="mb-auto pt-1">
           <SidebarLinks routes={routes} toggleSidebar={toggleSidebar} />
         </ul>

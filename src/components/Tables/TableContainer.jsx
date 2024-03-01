@@ -299,13 +299,18 @@ const TableContainer = ({ datas, columns, TableName, handleAddModalOpen }) => {
           </button>
           <span className="flex items-center gap-1">
             <h3 className="dark:text-gray-100">Page</h3>
-            <strong className="dark:text-gray-100">
-              {table.getState().pagination.pageIndex + 1} of{' '}
-              {table.getPageCount()}
-            </strong>
+            <div className="flex gap-1 flex-row">
+              <strong className="dark:text-gray-100">
+                {table.getState().pagination.pageIndex + 1}
+              </strong>
+              <strong>of </strong>
+              <strong>{table.getPageCount()}</strong>
+            </div>
           </span>
+          <div className="hidden md:block">|</div>
           <span className="flex items-center gap-1 dark:text-gray-100">
-            | Go to page:
+            <span className="hidden md:inline-block">Go</span>
+            To
             <input
               type="number"
               value={table.getState().pagination.pageIndex + 1}
@@ -322,7 +327,7 @@ const TableContainer = ({ datas, columns, TableName, handleAddModalOpen }) => {
             onChange={(e) => {
               table.setPageSize(Number(e.target.value));
             }}
-            className="p-2 dark:bg-gray-300 bg-transparent"
+            className="p-1 dark:bg-gray-300 bg-transparent"
           >
             {[10, 20, 30, 50].map((pageSize) => (
               <option key={pageSize} value={pageSize}>

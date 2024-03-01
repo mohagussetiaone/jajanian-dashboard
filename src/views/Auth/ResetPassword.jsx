@@ -1,11 +1,36 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import supabase from 'config/supabaseClient';
+import { BsBoxArrowUpRight } from 'react-icons/bs';
+import toast from 'react-hot-toast';
+
 const ResetPassword = () => {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+
   const backgroundImageStyle = {
     backgroundImage:
-      'url(https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=1980&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)', // Mengatur URL gambar latar belakang dari Unsplash
+      'url(https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=1980&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     opacity: '0.9',
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${import.meta.env.VITE_DEV_ORIGIN}password-confirmation`,
+      });
+      if (error) {
+        toast.error('Could not authenticate user');
+      } else {
+        navigate('/email-send');
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -28,8 +53,9 @@ const ResetPassword = () => {
               </p>
               <input
                 type="email"
-                name=""
-                id=""
+                name="email"
+                id="email"
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter Email Address"
                 className="w-full text-black px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none"
                 autoFocus
@@ -37,13 +63,13 @@ const ResetPassword = () => {
                 required
               />
             </label>
-
-            <button className="w-full py-3 font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg border-indigo-500 hover:shadow inline-flex space-x-2 items-center justify-center">
-              <span>Reset password</span>
+            <button
+              className="w-full py-3 font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg border-indigo-500 hover:shadow inline-flex space-x-2 items-center justify-center"
+              onClick={handleResetPassword}
+            >
+              <span>Konfirmasi</span>
             </button>
-
             <div className="text-center flex justify-end">
-              {/* <span className="text-black">Kembali </span> */}
               <a
                 href="#"
                 className="font-medium inline-flex space-x-1 items-center"
@@ -55,20 +81,7 @@ const ResetPassword = () => {
                   </span>
                 </Link>
                 <span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
+                  <BsBoxArrowUpRight className="ml-1 text-indigo-600" />
                 </span>
               </a>
             </div>

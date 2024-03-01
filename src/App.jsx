@@ -12,7 +12,7 @@ import {
   useLoaderData,
 } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import Dashboard from 'pages/Dashboard/ECommerce';
+import Dashboard from 'views/Dashboard';
 import CategoryProduct from 'views/Products/Category';
 import ProductList from 'views/Products/Product';
 import Layout from './layouts/layouts';
@@ -22,6 +22,8 @@ import SignIn from 'views/Auth/SignIn';
 import SignUp from 'views/Auth/SignUp';
 import ResetPassword from 'views/Auth/ResetPassword';
 import NotFound from 'views/NotFound';
+import EmailSend from 'views/Auth/ModalResetPasswordSuccess';
+import KonfirmasiResetPassword from './views/Auth/KonfirmationResetPassword.jsx';
 
 const router = createBrowserRouter([
   {
@@ -70,6 +72,14 @@ const router = createBrowserRouter([
     path: '*',
     element: <NotFound />,
   },
+  {
+    path: '/email-send',
+    element: <EmailSend />,
+  },
+  {
+    path: '/password-confirmation',
+    element: <KonfirmasiResetPassword />,
+  },
 ]);
 
 const MINUTE = 1000 * 60;
@@ -106,10 +116,10 @@ export default function App() {
           }}
         />
         <RouterProvider router={router} />
-        <ReactQueryDevtools
+        {/* <ReactQueryDevtools
           initialIsOpen={false}
           buttonPosition="bottom-left"
-        />
+        /> */}
       </QueryClientProvider>
     </>
   );

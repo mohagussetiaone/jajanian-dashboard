@@ -57,6 +57,7 @@ export const useAuthCheck = () => {
     const checkAuth = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
+        console.log('sesi login', data);
         if (error) throw new Error(error.message);
         if (data) {
           setIsValid(data);
@@ -72,6 +73,7 @@ export const useAuthCheck = () => {
     checkAuth();
   }, [navigate]);
 
+  console.log('isValid', isValid);
   return isValid;
 };
 

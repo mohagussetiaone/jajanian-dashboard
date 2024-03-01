@@ -51,7 +51,10 @@ export default function Layout(props) {
       <div className="h-full w-full bg-lightPrimary dark:bg-navy-900">
         <main className={`h-full flex-none transition-all md:px-2`}>
           <div className="h-full">
-            <Header />
+            <Header
+              onOpenSidenav={() => setOpen(!open)}
+              authToken={authToken}
+            />
             <div className="mx-auto mb-auto h-full min-h-[84vh] p-2 md:pr-2">
               <Outlet />
             </div>

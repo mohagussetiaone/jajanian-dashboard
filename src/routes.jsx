@@ -31,6 +31,12 @@ export const routes = [
 
 export const Protectedroutes = [
   // {
+  //   name: 'Permintaan Bantuan',
+  //   layout: '/',
+  //   path: '/list-bantuan',
+  //   Component: <ListBantuan authToken={undefined} />,
+  // },
+  // {
   //   name: 'Perubahan Layanan',
   //   layout: '/',
   //   path: 'layanan',
