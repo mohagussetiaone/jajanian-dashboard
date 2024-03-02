@@ -7,14 +7,17 @@ import {
   RiContactsBookLine,
   RiSettings4Line,
 } from 'react-icons/ri';
-import UserOne from '../../images/user/user-01.png';
+import profileImages from 'assets/img/avatars/avatar.png';
 import ModalLogout from './ModalLogout';
 import toast from 'react-hot-toast';
 
-const DropdownUser = () => {
+const DropdownUser = ({ profile }) => {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [modalLogout, setModalLogout] = useState(false);
+  const imageSrc = profile?.profile_picture
+    ? `data:image/png;base64,${profile?.profile_picture}`
+    : profileImages;
 
   const trigger = useRef(null);
   const dropdown = useRef(null);
@@ -74,13 +77,15 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block font-medium text-black dark:text-white">
-            Thomas Anree
+            {profile.nama_lengkap}
           </span>
-          <span className="block text-xs dark:text-white">Admin</span>
+          <span className="block text-xs dark:text-white">
+            {profile.active ? 'Active' : 'Inactive'}
+          </span>
         </span>
 
         <span className="h-10 w-10 rounded-full">
-          <img src={UserOne} alt="User" />
+          <img src={imageSrc} alt="User" />
         </span>
       </Link>
 
@@ -100,7 +105,7 @@ const DropdownUser = () => {
               className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
             >
               <RiUser3Line className="w-5 h-5" />
-              My Profile
+              Data profil
             </Link>
           </li>
           <li>
@@ -109,7 +114,7 @@ const DropdownUser = () => {
               className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
             >
               <RiContactsBookLine className="w-5 h-5" />
-              My Contacts
+              Data Kontak
             </Link>
           </li>
           <li>
@@ -118,15 +123,15 @@ const DropdownUser = () => {
               className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
             >
               <RiSettings4Line className="w-5 h-5" />
-              Account Settings
+              Pengaturan
             </Link>
           </li>
         </ul>
         <button
-          className="flex justify-center border-t mt-4 items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out text-red-400 hover:text-red-600 hover:bg-red-100/50 lg:text-base"
+          className="flex justify-center border-t mt-4 items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out text-red-500 hover:text-red-600 hover:bg-red-100/50 lg:text-base"
           onClick={() => setModalLogout(true)}
         >
-          Log Out
+          Keluar
         </button>
         {modalLogout && (
           <ModalLogout

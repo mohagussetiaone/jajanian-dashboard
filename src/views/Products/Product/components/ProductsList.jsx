@@ -12,6 +12,7 @@ import AddProductModal from './AddProductModal';
 import EditProductModal from './EditProductModal';
 import ViewProductModal from './ViewProductModal';
 import ModalConfirmation from './ModalConfirmation';
+import ProductListSekeleton from './ProductListSekeleton';
 import supabase from 'config/supabaseClient';
 
 const ProductList = () => {
@@ -21,6 +22,7 @@ const ProductList = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [idProduct, setIdProduct] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
   const handleViewModalOpen = (product) => {
     setSelectedProduct(product);
     setViewModalOpen(true);
@@ -201,7 +203,7 @@ const ProductList = () => {
     },
   });
 
-  if (isPending) return 'Loading...';
+  if (isPending) return <ProductListSekeleton />;
   if (error) return 'An error has occurred: ' + error.message;
 
   return (

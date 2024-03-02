@@ -106,7 +106,7 @@ const SignIn = () => {
   }, [rememberMe]);
 
   return (
-    <section className="flex flex-col md:flex-row h-screen items-center">
+    <section className="flex flex-col md:flex-row h-screen items-center overflow-hidden">
       <div className="bg-white w-full md:max-w-md lg:max-w-full md:mx-0 md:w-1/2 xl:w-1/2 h-screen px-6 lg:px-16 xl:px-12 flex items-center justify-center">
         <div className="w-full h-100 px-2 md:px-8 xl:px-14">
           <h1 className="text-xl flex justify-center text-black md:text-2xl font-bold leading-tight mt-4">

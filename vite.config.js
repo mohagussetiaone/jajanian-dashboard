@@ -19,4 +19,5 @@ export default defineConfig({
       config: path.resolve(__dirname, './src/config'),
     },
   },
+  clearScreen: false,
 });

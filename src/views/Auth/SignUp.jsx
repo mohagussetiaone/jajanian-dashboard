@@ -70,7 +70,7 @@ const SignUp = () => {
   };
 
   return (
-    <section className="flex flex-col md:flex-row h-screen items-center">
+    <section className="flex flex-col md:flex-row h-screen items-center overflow-hidden">
       <div className="flex bg-white w-full md:max-w-md lg:max-w-full md:mx-0 md:w-1/2 xl:w-1/2 h-screen px-6 lg:px-16 xl:px-12">
         <div className="w-full mt-8 px-14 h-100">
           <h1 className="text-xl flex justify-center text-black md:text-2xl font-bold leading-tight">

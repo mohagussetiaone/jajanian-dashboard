@@ -49,8 +49,8 @@ const TableContainer = ({ datas, columns, TableName, handleAddModalOpen }) => {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
 
-    debugTable: true,
-    debugHeaders: true,
+    debugTable: false,
+    debugHeaders: false,
     debugColumns: false,
   });
 
@@ -128,6 +128,8 @@ const TableContainer = ({ datas, columns, TableName, handleAddModalOpen }) => {
           <div>
             <input
               type="text"
+              id="search"
+              name="search"
               value={globalFilter}
               className="form-control search px-4 py-2 rounded-lg w-[120px] md:w-full placeholder:text-sm placeholder:text-gray-700 dark:bg-gray-300"
               placeholder={`Cari ${TableName ?? ''}...`}
@@ -138,8 +140,8 @@ const TableContainer = ({ datas, columns, TableName, handleAddModalOpen }) => {
             <i className="ri-search-line search-icon"></i>
           </div>
           <div onClick={handleAddModalOpen}>
-            <button className="btn bg-blue-500 text-gray-100 rounded-lg p-2">
-              Add <span className="hidden md:inline">{TableName}</span>
+            <button className="btn text-sm bg-blue-500 text-gray-100 rounded-lg p-2.5">
+              Tambah <span className="hidden md:inline">{TableName}</span>
             </button>
           </div>
         </div>
@@ -309,10 +311,12 @@ const TableContainer = ({ datas, columns, TableName, handleAddModalOpen }) => {
           </span>
           <div className="hidden md:block">|</div>
           <span className="flex items-center gap-1 dark:text-gray-100">
-            <span className="hidden md:inline-block">Go</span>
-            To
+            <span className="hidden md:inline-block">Ke</span>
+            Page
             <input
               type="number"
+              id="page"
+              name="page"
               value={table.getState().pagination.pageIndex + 1}
               onChange={(e) => {
                 const page = e.target.value ? Number(e.target.value) - 1 : 0;
@@ -323,15 +327,17 @@ const TableContainer = ({ datas, columns, TableName, handleAddModalOpen }) => {
             />
           </span>
           <select
+            id="pageSize"
+            name="pageSize"
             value={table.getState().pagination.pageSize}
             onChange={(e) => {
               table.setPageSize(Number(e.target.value));
             }}
             className="p-1 dark:bg-gray-300 bg-transparent"
           >
-            {[10, 20, 30, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                <span className="dark:text-gray-100"> Show {pageSize}</span>
+            {[10, 20, 30, 50].map((pageSize, index) => (
+              <option key={index} value={pageSize}>
+                Show {pageSize}
               </option>
             ))}
           </select>

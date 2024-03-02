@@ -1,13 +1,55 @@
+import { useState, useEffect } from 'react';
+import supabase from 'config/supabaseClient';
 import DropdownMessage from './DropdownMessage';
 import DropdownNotification from './DropdownNotification';
 import DropdownUser from './DropdownUser';
 import DarkModeSwitcher from './DarkModeSwitcher';
 import { IoMdSearch } from 'react-icons/io';
 import { HiMenu } from 'react-icons/hi';
+import { useProfileStore } from 'store/Profile/StoreProfile';
 
 const Header = ({ onOpenSidenav }) => {
+  const { profile, setProfile } = useProfileStore();
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error fetching session:', error.message);
+          return;
+        }
+        if (data) {
+          getProfile(data?.session?.user?.id);
+        }
+      } catch (error) {
+        console.error('Error in fetchSession:', error);
+      }
+    };
+    fetchSession();
+  }, []);
+
+  const getProfile = async (id) => {
+    try {
+      const { data } = await supabase
+        .schema('users')
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
+      setProfile(data);
+    } catch (error) {
+      console.error(true);
+    }
+  };
+
+  console.log('data session', profile);
+
   return (
-    <header className="sticky top-0 z-51 flex w-full bg-white drop-shadow-1 dark:bg-navy-800 dark:drop-shadow-none">
+    <header
+      className="sticky top-0 flex w-full bg-white drop-shadow-1 dark:bg-navy-800 dark:drop-shadow-none"
+      style={{ zIndex: 50 }}
+    >
       <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
         <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
           <span
@@ -25,6 +67,8 @@ const Header = ({ onOpenSidenav }) => {
               </button>
               <input
                 type="text"
+                id="search"
+                name="search"
                 placeholder="Type to search..."
                 className="w-full bg-transparent pl-8 text-md pr-4 text-gray-400 focus:outline-none dark:text-white xl:w-[200px]"
               />
@@ -38,7 +82,7 @@ const Header = ({ onOpenSidenav }) => {
             <DropdownNotification />
             <DropdownMessage />
           </ul>
-          <DropdownUser />
+          <DropdownUser profile={profile} />
         </div>
       </div>
     </header>

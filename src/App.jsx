@@ -15,6 +15,7 @@ import { Toaster } from 'react-hot-toast';
 import Dashboard from 'views/Dashboard';
 import CategoryProduct from 'views/Products/Category';
 import ProductList from 'views/Products/Product';
+import Profile from 'views/Profile';
 import Layout from './layouts/layouts';
 
 // Auth
@@ -55,6 +56,22 @@ const router = createBrowserRouter([
           return <ProductList authToken={authToken} />;
         },
       },
+      {
+        path: '/profile',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <Profile authToken={authToken} />;
+        },
+      },
+      // {
+      //   path: '/product-list-sekeleton',
+      //   loader: authLoader,
+      //   Component() {
+      //     const { authToken } = useLoaderData();
+      //     return <ProductListSekeleton authToken={authToken} />;
+      //   },
+      // },
     ],
   },
   {

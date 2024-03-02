@@ -1,4 +1,6 @@
 import { Fragment } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import supabase from 'config/supabaseClient';
 import { Dialog, Transition } from '@headlessui/react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -8,6 +10,28 @@ const ModalConfirmation = ({
   handleDeleteClose,
 }) => {
   console.log('id', idProduct);
+  const queryClient = useQueryClient();
+
+  const handleDeleteProduct = async (e) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase
+        .schema('product')
+        .from('products')
+        .delete()
+        .eq('product_id', idProduct);
+      handleDeleteClose();
+      toast.success('Produk Berhasil dihapus');
+      queryClient.invalidateQueries({ queryKey: ['productData'] });
+      if (error) {
+        toast.error('Produk gagal dihapus');
+        console.error(error);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <>
       <Toaster />
@@ -54,7 +78,7 @@ const ModalConfirmation = ({
                     <button
                       type="button"
                       className="border-transparent hover:bg-red-00 inline-flex justify-center rounded-md border bg-red-100 px-4 py-2 text-sm font-medium text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                      // onClick={handleDelete}
+                      onClick={handleDeleteProduct}
                     >
                       Ya, Proses
                     </button>

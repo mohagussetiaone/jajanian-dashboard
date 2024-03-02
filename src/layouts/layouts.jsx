@@ -49,7 +49,7 @@ export default function Layout(props) {
     <div className="max-w-screen flex h-full">
       <Sidebar open={open} onClose={() => setOpen(!open)} />
       <div className="h-full w-full bg-lightPrimary dark:bg-navy-900">
-        <main className={`h-full flex-none transition-all md:px-2`}>
+        <main className={`h-full flex-none transition-all md:px-1`}>
           <div className="h-full">
             <Header
               onOpenSidenav={() => setOpen(!open)}

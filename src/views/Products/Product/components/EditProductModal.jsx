@@ -1,24 +1,22 @@
-import { useState } from 'react';
-import { MdClose, MdEdit, MdOutlineEdit } from 'react-icons/md';
+import { useState, useEffect } from 'react';
+import { MdClose, MdEdit } from 'react-icons/md';
 import Select from 'react-select';
 import { useQueryClient } from '@tanstack/react-query';
+import supabase from 'config/supabaseClient';
+import toast from 'react-hot-toast';
 
 const EditProductModal = ({
   handleEditModalClose,
   editModalOpen,
   selectedProduct,
 }) => {
-  console.log('selected product', selectedProduct);
   const queryClient = useQueryClient();
   const [options, setOptions] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [imageBase64, setImageBase64] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    category_id: selectedProduct.category_id,
+    category_id: selectedProduct.category_id.category_id,
     product_name: selectedProduct.product_name,
     image_base64: selectedProduct.image_base64,
     price: selectedProduct.price,
@@ -27,9 +25,28 @@ const EditProductModal = ({
     description: selectedProduct.description,
   });
 
+  useEffect(() => {
+    const fetchCategory = async () => {
+      const { data } = await supabase
+        .schema('product')
+        .from('categories')
+        .select('category_id, category_name, created_at, updated_at');
+      const formattedOptions = data?.map((option) => ({
+        value: option.category_id,
+        label: option.category_name,
+      }));
+      setOptions(formattedOptions);
+    };
+    fetchCategory();
+  }, []);
+
   const handleSelectChange = (selected) => {
-    setSelectedCategory(selected);
-    setSelectedCategoryId(selected.value);
+    setFormData((prevData) => ({
+      ...prevData,
+      category_id: selected
+        ? selected.value
+        : selectedProduct.category_id.category_id,
+    }));
   };
 
   const handleImageChange = async (file) => {
@@ -66,9 +83,35 @@ const EditProductModal = ({
     e.preventDefault();
   };
 
-  const handleDeleteImage = () => {
-    setImageBase64(null);
-    setImagePreview(null);
+  const image_new = null;
+
+  const handleDeleteImage = async (e) => {
+    e.preventDefault();
+    try {
+      if (imagePreview || imageBase64) {
+        setImageBase64(null);
+        setImagePreview(null);
+        queryClient.invalidateQueries({ queryKey: ['productData'] });
+      } else {
+        const { error } = await supabase
+          .schema('product')
+          .from('products')
+          .update({ image_base64: image_new })
+          .eq('product_id', selectedProduct.product_id);
+        setFormData({
+          image_base64: null,
+        });
+        setImageBase64(null);
+        setImagePreview(null);
+        toast.success('Foto produk berhasil dihapus');
+        queryClient.invalidateQueries({ queryKey: ['productData'] });
+        if (error) {
+          toast.error('gagal menghapus foto produk');
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleChange = (e) => {
@@ -76,9 +119,29 @@ const EditProductModal = ({
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleEditProduct = async (e) => {
     e.preventDefault();
-    toggleModal();
+    try {
+      const { data } = await supabase
+        .schema('product')
+        .from('products')
+        .update({
+          product_name: formData.product_name,
+          category_id: formData.category_id,
+          price: formData.price,
+          description: formData.description,
+          image_base64: imageBase64 || formData.image_base64,
+          promo: formData.promo,
+          original_price: formData.original_price,
+        })
+        .eq('product_id', selectedProduct.product_id);
+      toast.success('Produk berhasil diupdate');
+      queryClient.invalidateQueries({ queryKey: ['productData'] });
+      handleEditModalClose();
+      return data;
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -106,19 +169,25 @@ const EditProductModal = ({
                 </button>
               </div>
               {/* Modal body */}
-              <form className="p-4 md:p-5" onSubmit={handleSubmit}>
+              <form className="p-4 md:p-5" onSubmit={handleEditProduct}>
                 <div className="grid gap-4">
                   <div className="grid gap-4">
                     <div className="col-span-2">
                       <label
                         htmlFor="name"
+                        name="name"
                         className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                       >
                         Pilih kategori
                       </label>
                       <Select
+                        id="category"
                         name="category"
-                        value={formData.category_id}
+                        value={options.find(
+                          (option) =>
+                            option.value ===
+                            selectedProduct.category_id.category_id,
+                        )}
                         onChange={handleSelectChange}
                         options={options}
                       />
@@ -143,7 +212,7 @@ const EditProductModal = ({
                     </div>
                     <div className="col-span-2">
                       <label
-                        htmlFor="Upload File"
+                        htmlFor="UploadFile"
                         className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                       >
                         Pilih Image
@@ -152,12 +221,15 @@ const EditProductModal = ({
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full px-2 py-1 mb-4 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         id="default_size"
                         type="file"
+                        name="image"
                         accept=".png, .jpg, .jpeg, .svg"
                         onChange={(e) => {
                           handleImageChange(e.target.files[0]);
                         }}
                       />
-                      {(formData.image_base64 || !imagePreview) && (
+                      {(selectedProduct.image_base64 === null ||
+                        imagePreview ||
+                        formData.image_base64 === null) && (
                         <div className="items-center justify-center w-full hidden md:block">
                           <label
                             htmlFor="dropzone-file"
@@ -185,9 +257,9 @@ const EditProductModal = ({
                               </svg>
                               <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                                 <span className="font-semibold">
-                                  Klik untuk upload
+                                  Drag and drop
                                 </span>{' '}
-                                atau drag dan drop
+                                Untuk upload file image
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
                                 hanya dapat upload SVG, PNG, JPG atau GIF (MAX.
@@ -203,15 +275,17 @@ const EditProductModal = ({
                           </label>
                         </div>
                       )}
-                      {formData?.image_base64 && (
+                      {(formData?.image_base64 || imagePreview) && (
                         <div className="mt-4 col-span-2 w-[150px] h-[150px">
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             Image Preview
                           </p>
                           <div className="relative">
                             <img
-                              src={`data:image/png;base64,${formData.image_base64}`}
-                              alt="Preview"
+                              src={`data:image/png;base64,${
+                                imageBase64 || formData.image_base64
+                              }`}
+                              alt="Preview.jpg"
                               className="mt-2 rounded-lg max-w-full h-auto"
                             />
                             <button
@@ -303,7 +377,7 @@ const EditProductModal = ({
                       className="flex bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-2 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                     >
                       <MdEdit className="w-5 h-5 mr-1" />
-                      Tambah produk
+                      Edit produk
                     </button>
                   </div>
                 </div>

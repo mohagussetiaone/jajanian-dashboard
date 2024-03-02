@@ -80,7 +80,7 @@ const ResetPassword = () => {
                 <Link to="/signin" className="text-gray-800">
                   {'  '}
                   <span className="text-indigo-600 cursor-pointer hover:text-indigo-600text-md">
-                    {'  '}Sign in
+                    {'  '}Masuk akun
                   </span>
                 </Link>
                 <span>

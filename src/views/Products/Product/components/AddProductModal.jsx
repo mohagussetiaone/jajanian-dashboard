@@ -111,6 +111,7 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
       console.error('Error:', error);
     }
   };
+
   return (
     <>
       {addModalOpen && (
@@ -180,6 +181,7 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full px-2 py-1 mb-4 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         id="default_size"
                         type="file"
+                        name="image"
                         accept=".png, .jpg, .jpeg, .svg"
                         onChange={(e) => {
                           handleImageChange(e.target.files[0]);
@@ -225,6 +227,7 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
                             <input
                               id="dropzone-file"
                               type="file"
+                              name="image"
                               accept=".png, .jpg, .jpeg, .svg"
                               className="hidden"
                             />

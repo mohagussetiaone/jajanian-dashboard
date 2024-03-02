@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,6 +11,166 @@
     font-feature-settings: 'kern' !important;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.5px;
+  }
+  /* Custom Scrollbar Styling */
+  body::-webkit-scrollbar {
+    width: 0.7rem;
+  }
+
+  body::-webkit-scrollbar-thumb {
+    background-color: #ef5a03; /* Contoh warna; ganti dengan variabel Tailwind atau nilai warna kustom Anda */
+    /* border-radius: 0.7rem; */
+  }
+
+  body::-webkit-scrollbar-track {
+    background-color: #fbdecc; /* Contoh warna; D0DFED ganti dengan variabel Tailwind atau nilai warna kustom Anda */
+    /* border-radius: 0.7rem; */
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: #ef5a03 #fbdecc; /* Sesuaikan warna dengan tema Anda */
+    }
+  }
+}
+
+@layer utilities {
+  .gradient-bg {
+    @apply w-auto h-full relative overflow-hidden;
+    background: linear-gradient(40deg, rgb(0, 125, 255), rgb(0, 17, 82));
+    top: 0;
+    left: 0;
+  }
+
+  .gradient-bg svg {
+    @apply hidden;
+  }
+
+  .gradients-container {
+    @apply w-full h-full;
+    filter: url(#goo) blur(40px);
+  }
+
+  .circle-base {
+    @apply absolute bg-no-repeat;
+    mix-blend-mode: var(--blending);
+    width: var(--circle-size);
+    height: var(--circle-size);
+    top: calc(50% - var(--circle-size) / 2);
+    left: calc(50% - var(--circle-size) / 2);
+    transform-origin: center center;
+    opacity: 1;
+  }
+
+  .g1 {
+    @apply circle-base;
+    background: radial-gradient(
+      circle at center,
+      rgba(18, 85, 255, 0.8) 0,
+      rgba(18, 85, 255, 0) 50%
+    );
+    animation: moveVertical 20s ease infinite;
+  }
+
+  .g2 {
+    @apply circle-base;
+    background: radial-gradient(
+      circle at center,
+      rgba(0, 123, 255, 0.8) 0,
+      rgba(0, 123, 255, 0) 50%
+    );
+    transform-origin: calc(50% - 400px);
+    animation: moveInCircle 15s reverse infinite;
+  }
+
+  .g3 {
+    @apply circle-base;
+    background: radial-gradient(
+      circle at center,
+      rgba(100, 220, 255, 0.8) 0,
+      rgba(100, 220, 255, 0) 50%
+    );
+    top: calc(50% - var(--circle-size) / 2 + 200px);
+    left: calc(50% - var(--circle-size) / 2 - 500px);
+    transform-origin: calc(50% + 400px);
+    animation: moveInCircle 35s linear infinite;
+  }
+
+  .g4 {
+    @apply circle-base;
+    background: radial-gradient(
+      circle at center,
+      rgba(0, 81, 152, 0.8) 0,
+      rgba(0, 81, 152, 0) 50%
+    );
+    transform-origin: calc(50% - 200px);
+    animation: moveHorizontal 35s ease infinite;
+    opacity: 0.7;
+  }
+
+  .g5 {
+    @apply circle-base;
+    background: radial-gradient(
+      circle at center,
+      rgba(255, 25, 25, 0.8) 0,
+      rgba(255, 25, 25, 0) 50%
+    );
+    width: calc(var(--circle-size) * 2);
+    height: calc(var(--circle-size) * 2);
+    top: calc(50% - var(--circle-size));
+    left: calc(50% - var(--circle-size));
+    transform-origin: calc(50% - 800px) calc(50% + 200px);
+    animation: moveInCircle 15s ease infinite;
+  }
+
+  .interactive {
+    @apply absolute w-full h-full bg-no-repeat;
+    background: radial-gradient(
+      circle at center,
+      rgba(226, 235, 244, 0.8) 0,
+      rgba(226, 235, 244, 0) 50%
+    );
+    mix-blend-mode: var(--blending);
+    top: -50%;
+    left: -50%;
+    opacity: 0.7;
+  }
+}
+
+@keyframes moveInCircle {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes moveVertical {
+  0% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(50%);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes moveHorizontal {
+  0% {
+    transform: translateX(-50%) translateY(-10%);
+  }
+  50% {
+    transform: translateX(50%) translateY(10%);
+  }
+  100% {
+    transform: translateX(-50%) translateY(-10%);
   }
 }
 
@@ -26,4 +187,19 @@ input.defaultCheckbox::before {
 
 input:checked.defaultCheckbox::before {
   opacity: 1;
+}
+
+/* Custom CSS for scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px; /* Adjust the width as needed */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  /* Optional: Style for the track (background) of the scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  /* Style for the scrollbar handle */
+  background-color: #edf2f7; /* Example color */
+  border-radius: 22px; /* Optional: for rounded corners */
 }

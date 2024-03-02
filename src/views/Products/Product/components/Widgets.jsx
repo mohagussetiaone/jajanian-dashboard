@@ -13,8 +13,6 @@ const Widgets = ({ data }) => {
   const filteredDrink = sumBy(data, (product) =>
     product.category_id.category_id === 2 ? 1 : 0,
   );
-  console.log('filteredFood', filteredFood);
-  console.log('filteredDrink', filteredDrink);
 
   return (
     <div className="min-w-screen flex items-center justify-center">
