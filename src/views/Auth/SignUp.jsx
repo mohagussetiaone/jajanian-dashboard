@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import supabase from 'config/supabaseClient';
 import toast from 'react-hot-toast';
+import backgroundAuth from '../../assets/img/avatars/background.png';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -32,15 +33,12 @@ const SignUp = () => {
     }));
   };
 
-  const validatePasswordMatch = () => {
-    if (formData.confirmPassword !== formData.password) {
-      toast.error('konfirmasi password harus sama.');
-    }
-  };
-
   const SignUp = async (e) => {
     e.preventDefault();
-    validatePasswordMatch();
+    if (formData.confirmPassword !== formData.password) {
+      toast.error('konfirmasi password harus sama.');
+      return;
+    }
     const loadingToast = toast.loading('Memproses pendaftaran...');
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -79,23 +77,6 @@ const SignUp = () => {
             Daftar akun
           </h1>
           <form className="mt-6" onSubmit={SignUp}>
-            {/* <div>
-              <label className="flex justify-start text-gray-700">
-                Nama Lengkap
-              </label>
-              <input
-                type="text"
-                name="namalengkap"
-                id="namalengkap"
-                value={formData.namalengkap}
-                onChange={handleInputChange}
-                placeholder="Masukkan nama lengkap anda"
-                className="w-full text-black px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none"
-                autoFocus
-                autoComplete="on"
-                required
-              />
-            </div> */}
             <div className="mt-2">
               <label className="flex justify-start text-gray-700">Email</label>
               <input
@@ -104,7 +85,7 @@ const SignUp = () => {
                 id="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="Masukkan email anda"
+                placeholder="Masukkan email"
                 className="w-full text-black px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none"
                 autoFocus
                 autoComplete="on"
@@ -113,14 +94,14 @@ const SignUp = () => {
             </div>
             <div className="mt-2">
               <label className="flex justify-start text-gray-700">
-                Password
+                Kata sandi
               </label>
               <div className="relative">
                 <input
                   type={showConfirPassword ? 'text' : 'password'}
                   name="password"
                   id="password"
-                  placeholder="Masukkan Password anda"
+                  placeholder="Masukkan kata sandi"
                   minLength="6"
                   value={formData.password}
                   onChange={handleInputChange}
@@ -141,14 +122,14 @@ const SignUp = () => {
             </div>
             <div className="mt-2">
               <label className="flex justify-start text-gray-700">
-                Konfirmasi Password
+                Konfirmasi kata sandi
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="confirmPassword"
                   id="confirmPassword"
-                  placeholder="Masukkan Ulang Password anda"
+                  placeholder="Masukkan ulang kata sandi"
                   minLength="6"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
@@ -185,11 +166,11 @@ const SignUp = () => {
           </p>
         </div>
       </div>
-      <div className="bg-indigo-600 hidden lg:block w-full md:w-1/2 xl:w-2/3 h-screen">
+      <div className="bg-indigo-600 hidden lg:block w-full md:w-1/2 xl:w-1/2 h-screen">
         <img
-          src="https://source.unsplash.com/random"
-          alt=""
-          className="w-full h-full object-cover"
+          src={backgroundAuth}
+          alt="banner-auth.jpg"
+          className="w-full h-auto object-cover"
         />
       </div>
     </section>

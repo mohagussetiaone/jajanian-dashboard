@@ -1,21 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { Link, useNavigate } from 'react-router-dom';
 import supabase from 'config/supabaseClient';
 import { set } from 'store/Local/Forage';
 import toast from 'react-hot-toast';
 import { useProfileStore } from 'store/Profile/StoreProfile';
-import { MdArrowBack } from 'react-icons/md';
+import backgroundAuth from '../../assets/img/avatars/background.png';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const { setProfile } = useProfileStore();
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { setProfile } = useProfileStore();
+
+  const savedEmail = localStorage.getItem('email') || '';
+  const savedPassword = localStorage.getItem('password') || '';
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: savedEmail,
+    password: savedPassword,
   });
 
   const handleInputChange = (e) => {
@@ -30,29 +33,11 @@ const SignIn = () => {
     setShowPassword((prevShowPassword) => !prevShowPassword);
   };
 
-  // useEffect(() => {
-  //   const rememberMeValue = localStorage.getItem("rememberMe") === "true";
-  //   setRememberMe(rememberMeValue);
-  //   const savedEmail = localStorage.getItem("email") || "";
-  //   const savedPassword = localStorage.getItem("password") || "";
-
-  //   if (rememberMeValue) {
-  //     setValue("email", savedEmail);
-  //     setValue("password", savedPassword);
-  //   } else {
-  //     setValue("email", "");
-  //     setValue("password", "");
-  //     localStorage.removeItem("email");
-  //     localStorage.removeItem("password");
-  //   }
-  // }, [setRememberMe, setValue]);
-
   const handleLoginWithGoogle = async (e) => {
     e.preventDefault();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
-    console.log('data', data);
     if (error) {
       alert('failed to login');
     }
@@ -60,19 +45,23 @@ const SignIn = () => {
 
   const handleSignInWithEmailPassword = async (e) => {
     e.preventDefault();
-    if (!formData.email || !formData.password) {
+    const { email, password } = formData;
+    if (!email || !password) {
       toast.error('Email dan Password harus diisi');
       return;
     }
     const loadingToast = toast.loading('Memproses login...');
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
+        email,
+        password,
       });
       setTimeout(async () => {
         toast.dismiss(loadingToast);
-        if (data) {
+        if (data.session === null) {
+          toast.error('User tidak ditemukan');
+          return;
+        } else if (data.session !== null) {
           const token = data?.session?.access_token;
           const dataProfile = data?.user;
           set(token);
@@ -80,9 +69,18 @@ const SignIn = () => {
           toast.success('Login Berhasil', {
             duration: 1900,
           });
+          if (rememberMe) {
+            localStorage.setItem('email', email);
+            localStorage.setItem('password', password);
+          } else {
+            localStorage.removeItem('email');
+            localStorage.removeItem('password');
+          }
           navigate('/dashboard');
         }
-        if (error) throw new Error(error.message);
+        if (error) {
+          throw new Error(error.message);
+        }
       }, 2000);
     } catch (error) {
       setTimeout(() => {
@@ -94,16 +92,25 @@ const SignIn = () => {
     }
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+  useEffect(() => {
+    const clearLocalStorage = () => {
+      if (!rememberMe) {
+        localStorage.removeItem('email');
+        localStorage.removeItem('password');
+      }
+    };
+    window.addEventListener('beforeunload', clearLocalStorage);
+    return () => {
+      window.removeEventListener('beforeunload', clearLocalStorage);
+    };
+  }, [rememberMe]);
 
   return (
     <section className="flex flex-col md:flex-row h-screen items-center">
       <div className="bg-white w-full md:max-w-md lg:max-w-full md:mx-0 md:w-1/2 xl:w-1/2 h-screen px-6 lg:px-16 xl:px-12 flex items-center justify-center">
-        <div className="w-full h-100 px-14">
+        <div className="w-full h-100 px-2 md:px-8 xl:px-14">
           <h1 className="text-xl flex justify-center text-black md:text-2xl font-bold leading-tight mt-4">
-            Log in ke akun anda
+            Masuk ke akun anda
           </h1>
           <form className="mt-6 px-2" action="#" method="POST">
             <div>
@@ -114,7 +121,7 @@ const SignIn = () => {
                 id="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="Masukkan email anda"
+                placeholder="Masukkan email"
                 className="w-full text-black px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none"
                 autoFocus
                 autoComplete="on"
@@ -123,14 +130,14 @@ const SignIn = () => {
             </div>
             <div className="mt-4">
               <label className="flex justify-start text-gray-700">
-                Password
+                Kata sandi
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   id="password"
-                  placeholder="Masukkan Password anda"
+                  placeholder="Masukkan kata sandi"
                   minLength="6"
                   value={formData.password}
                   onChange={handleInputChange}
@@ -153,16 +160,13 @@ const SignIn = () => {
               <div className="mb-4 flex items-center justify-between px-2">
                 <div className="flex items-center mb-2">
                   <input
-                    className="h-4 w-4 bg-white dark:bg-white mr-2 leading-tight"
+                    className="h-4 w-4 mr-2 leading-tight"
                     type="checkbox"
                     id="rememberMeCheckbox"
                     checked={rememberMe}
                     onChange={() => setRememberMe(!rememberMe)}
                   />
-                  <label
-                    className="text-sm text-gray-700"
-                    htmlFor="rememberMeCheckbox"
-                  >
+                  <label className="text-sm" htmlFor="rememberMeCheckbox">
                     Ingat Saya
                   </label>
                 </div>
@@ -181,7 +185,7 @@ const SignIn = () => {
               className="w-full block bg-blue-600 hover:bg-blue-700 focus:bg-indigo-400 text-white font-semibold rounded-lg px-4 py-3 mt-2"
               onClick={handleSignInWithEmailPassword}
             >
-              Log In
+              Masuk akun
             </button>
           </form>
           <div className="flex items-center justify-center my-6">
@@ -189,10 +193,10 @@ const SignIn = () => {
             <span className="px-4 text-gray-500">Atau</span>
             <hr className="border-gray-300 w-full" />
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center mx-2">
             <button
               type="button"
-              className="w-[325px] md:w-[350px] md:px-14 bg-white hover:bg-gray-100 focus:bg-gray-100 text-gray-900 font-semibold rounded-lg py-3 border border-gray-300"
+              className="w-[325px] md:w-full md:px-14 bg-white hover:bg-gray-100 focus:bg-gray-100 text-gray-900 font-semibold rounded-lg py-3 border border-gray-300"
             >
               <div
                 className="flex items-center justify-center"
@@ -223,12 +227,12 @@ const SignIn = () => {
                     d="M43.611,20.083L43.595,20L42,20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571	c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
                   ></path>
                 </svg>
-                <span className="md:ml-4 ml-2">Log in dengan Google</span>
+                <span className="md:ml-4 ml-2">Masuk dengan Google</span>
               </div>
             </button>
           </div>
-          <p className="mt-2 flex justify-start text-black">
-            Butuh akun?{' '}
+          <p className="mt-2 mx-2 flex justify-start text-black">
+            Belum mempunyai akun?{' '}
             <Link
               to="/signup"
               className="text-blue-500 hover:text-blue-700 font-semibold"
@@ -238,11 +242,11 @@ const SignIn = () => {
           </p>
         </div>
       </div>
-      <div className="bg-indigo-600 hidden lg:block w-full md:w-1/2 xl:w-2/3 h-screen">
+      <div className="bg-indigo-600 hidden lg:block w-full md:w-1/2 xl:w-1/2 h-screen">
         <img
-          src="https://source.unsplash.com/random"
-          alt=""
-          className="w-full h-full object-cover"
+          src={backgroundAuth}
+          alt="banner-auth.jpg"
+          className="w-full h-auto object-cover"
         />
       </div>
     </section>
