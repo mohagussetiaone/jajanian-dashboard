@@ -1,180 +1,239 @@
-import TableThree from 'components/Tables/TableThree';
+import React, { useState, useMemo, Fragment } from 'react';
+import { MdOutlineEdit, MdOutlineDeleteOutline } from 'react-icons/md';
+import { GrView } from 'react-icons/gr';
+import { IoMdMore } from 'react-icons/io';
+import { useQuery } from '@tanstack/react-query';
+import { Menu, Transition } from '@headlessui/react';
+import TableContainer from 'components/Tables/TableContainer';
+import Breadcrumb from 'components/Breadcrumbs/Breadcrumb';
+import AddCategoryProductModal from './AddCategoryProductModal';
+import EditCategoryProductModal from './EditCategoryProductModal';
+import ViewCategoryProductModal from './ViewCategoryProductModal';
+import ModalConfirmation from './ModalConfirmation';
+import CategoryListSekeleton from './CategoryListSekeleton';
+import supabase from 'config/supabaseClient';
+import dayjs from 'dayjs';
 
-export default function CategoryProductList() {
-  // const dispatch = useDispatch();
-  // const { productCategorys } = useSelector(
-  //   (state) => state.productCategoryState
-  // );
-  // const dt = useRef(null);
-  // const [loading, setLoading] = useState(false);
-  // const [first, setFirst] = useState(0);
-  // const [search, setSearch] = useState("");
-  // const [refresh, setRefresh] = useState(false);
-  // const [id, setId] = useState();
-  // const [kebabMenu, setKebabMenu] = useState(false);
-  // const [showModal, setShowModal] = useState(false);
-  // const [showModalEdit, setShowModalEdit] = useState(false);
-  // let [isOpen, setIsOpen] = useState(true);
-  // const [filters, setFilters] = useState({
-  //   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  // });
+const CategoryProductList = () => {
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [idCategory, setIdCategory] = useState(false);
+  const [selectedCategoryProduct, setSelectedCategoryProduct] = useState(null);
 
-  // useEffect(() => {
-  //   dispatch(GetProductsCategoryRequest());
-  //   setLoading(true);
-  //   setRefresh(false);
-  // }, [dispatch, refresh]);
+  const handleViewModalOpen = (category) => {
+    setSelectedCategoryProduct(category);
+    setViewModalOpen(true);
+  };
 
-  // console.log("productCategorys", productCategorys);
-  // const handleSearch = (e) => {
-  //   const value = e.target.value;
-  //   let _filters = { ...filters };
-  //   _filters["global"].value = value;
-  //   setFilters(_filters);
-  //   setSearch(value);
-  // };
+  const handleViewModalClose = () => {
+    setViewModalOpen(false);
+    setSelectedCategoryProduct(null);
+  };
 
-  // const cols = [
-  //   { field: "category_id", header: "ID" },
-  //   { field: "category_name", header: "Nama Kategori" },
-  //   { field: "created_at", header: "Tanggal Buat" },
-  //   { field: "updated_at", header: "Tanggal Update" },
-  // ];
+  const handleEditModalOpen = (category) => {
+    setSelectedCategoryProduct(category);
+    setEditModalOpen(true);
+  };
 
-  // const exportColumns = cols.map((col) => ({
-  //   title: col.header,
-  //   dataKey: col.field,
-  // }));
+  const handleEditModalClose = () => {
+    setEditModalOpen(false);
+    setSelectedCategoryProduct(null);
+  };
+  const handleAddModalOpen = () => {
+    setAddModalOpen(true);
+  };
 
-  // const exportCSV = () => {
-  //   const csvData = Papa.unparse(productCategorys);
-  //   const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-  //   saveAs(blob, "productCategories.csv");
-  // };
+  const handleAddModalClose = () => {
+    setAddModalOpen(false);
+  };
 
-  // const exportPdf = () => {
-  //   import("jspdf").then((jsPDF) => {
-  //     import("jspdf-autotable").then(() => {
-  //       const doc = new jsPDF.default(0, 0);
-  //       doc.autoTable(exportColumns, productCategorys);
-  //       doc.save("productCategory.pdf");
-  //     });
-  //   });
-  // };
+  const handleDeleteConfirm = (category) => {
+    setDeleteModalOpen(true);
+    setIdCategory(category.category_id);
+  };
 
-  // const exportExcel = () => {
-  //   import("xlsx").then((xlsx) => {
-  //     const worksheet = xlsx.utils.json_to_sheet(productCategorys);
-  //     const workbook = { Sheets: { data: worksheet }, SheetNames: ["data"] };
-  //     const excelBuffer = xlsx.write(workbook, {
-  //       bookType: "xlsx",
-  //       type: "array",
-  //     });
-  //     saveAsExcelFile(excelBuffer, "productCategorys");
-  //   });
-  // };
+  const handleDeleteClose = () => {
+    setDeleteModalOpen(false);
+  };
 
-  // const saveAsExcelFile = (buffer, fileName) => {
-  //   import("file-saver").then((module) => {
-  //     if (module && module.default) {
-  //       let EXCEL_TYPE =
-  //         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
-  //       let EXCEL_EXTENSION = ".xlsx";
-  //       const data = new Blob([buffer], {
-  //         type: EXCEL_TYPE,
-  //       });
-  //       module.default.saveAs(
-  //         data,
-  //         fileName + "_export_" + new Date().getTime() + EXCEL_EXTENSION
-  //       );
-  //     }
-  //   });
-  // };
+  const columns = useMemo(
+    () => [
+      {
+        id: 'category_name',
+        header: () => (
+          <p className="text-sm font-bold text-black dark:text-white">
+            Nama Category
+          </p>
+        ),
+        accessorKey: 'category_name',
+      },
+      {
+        id: 'created_at',
+        header: () => (
+          <p className="text-sm font-bold text-black dark:text-white">
+            Tanggal dibuat
+          </p>
+        ),
+        accessorKey: 'created_at',
+        cell: (info) => (
+          <p className="text-sm text-black dark:text-white">
+            {dayjs(info.row.original.created_at).format('DD/MM/YYYY HH:mm')}
+          </p>
+        ),
+      },
+      {
+        id: 'updated_at',
+        header: () => (
+          <p className="text-sm font-bold text-black dark:text-white">
+            Tanggal diupdate
+          </p>
+        ),
+        accessorKey: 'updated_at',
+        cell: (info) => (
+          <p className="text-sm text-black dark:text-white">
+            {dayjs(info.row.original.updated_at).format('DD/MM/YYYY HH:mm')}
+          </p>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => (
+          <p className="text-sm font-bold text-black dark:text-white">Aksi</p>
+        ),
+        cell: (info) => {
+          return (
+            <Menu as="div" className="relative flex justify-center">
+              <div>
+                <Menu.Button className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white dark:bg-navy-700 px-3 py-2 text-sm font-semibold text-black">
+                  <IoMdMore
+                    className="-mr-1 h-5 w-5 dark:text-white"
+                    aria-hidden="true"
+                  />
+                </Menu.Button>
+              </div>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute right-[50%] mt-2 w-32 origin-top-right rounded-md bg-white shadow-lg focus:outline-none dark:bg-navy-700">
+                  <div className="py-1">
+                    <Menu.Item>
+                      <button
+                        onClick={() => handleViewModalOpen(info.row.original)}
+                        className="flex items-center px-4 py-2 text-sm text-black dark:text-white"
+                      >
+                        <GrView className="mr-2 dark:text-white" />
+                        View
+                      </button>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <button
+                        onClick={() => handleEditModalOpen(info.row.original)}
+                        className="flex items-center px-4 py-2 text-sm text-black dark:text-white"
+                      >
+                        <MdOutlineEdit className="mr-2 dark:text-white" />
+                        Edit
+                      </button>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <button
+                        onClick={() => handleDeleteConfirm(info.row.original)}
+                        className="flex items-center px-4 py-2 text-sm text-black dark:text-white"
+                      >
+                        <MdOutlineDeleteOutline className="mr-2 dark:text-white" />
+                        Delete
+                      </button>
+                    </Menu.Item>
+                  </div>
+                </Menu.Items>
+              </Transition>
+            </Menu>
+          );
+        },
+      },
+    ],
+    [],
+  );
 
-  // const displayKebabMenu = (id) => {
-  //   setId(id);
-  //   setKebabMenu(!kebabMenu);
-  // };
+  const { isPending, error, data } = useQuery({
+    queryKey: ['categoryProductData'],
+    queryFn: async () => {
+      const { data } = await supabase.schema('product').from('categories')
+        .select(`
+        category_id,
+        category_name,
+        created_at,
+        updated_at
+      `);
+      return data;
+    },
+  });
 
-  // const formatDate = (value) => {
-  //   const date = new Date(value);
-  //   const day = date.getDate().toString().padStart(2, "0");
-  //   const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  //   const year = date.getFullYear().toString().substr(-2);
-  //   const hours = date.getHours().toString().padStart(2, "0");
-  //   const minutes = date.getMinutes().toString().padStart(2, "0");
-  //   return `${day}/${month}/${year} ${hours}:${minutes}`;
-  // };
-
-  // const dateBodyTemplate = (rowData, column) => {
-  //   const formattedDate = formatDates(rowData[column.field]);
-  //   return <>{formattedDate}</>;
-  // };
-
-  // const header = (
-  //   <div className="flex justify-between gap-2">
-  //     <div className="relative mb-4">
-  //       <div className="flex justify-end gap-4">
-  //         <div className="pointer-events-none absolute inset-y-0 right-[410px] hidden items-center pl-1 md:block">
-  //           <IoIosSearch className="hidden h-5 w-5  text-gray-600 md:mt-2 md:block" />
-  //         </div>
-  //         <input
-  //           type="search"
-  //           id="default-search"
-  //           className="block w-[140px] rounded-lg border border-gray-300 bg-gray-50 py-2 pl-2 pr-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 md:w-[300px] md:pl-10 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-  //           placeholder="Cari Produk"
-  //           onChange={handleSearch}
-  //           value={search}
-  //           autoComplete="off"
-  //         />
-  //         <button
-  //           className="rounded-md bg-blue-600 px-2 py-1 text-sm text-white hover:bg-blue-700"
-  //           onClick={() => setShowModal(!showModal)}
-  //         >
-  //           <span className="hidden md:block">Tambah Category</span>
-  //           <span className="flex md:hidden">
-  //             <IoMdAdd className="p-0 md:ml-2" />
-  //           </span>
-  //         </button>
-  //       </div>
-  //     </div>
-  //     <div className="flex">
-  //       <Button
-  //         type="button"
-  //         icon="pi pi-file"
-  //         size="large"
-  //         rounded
-  //         onClick={exportCSV}
-  //         data-pr-tooltip="CSV"
-  //         tooltip="Export to CSV"
-  //       />
-  //       <Button
-  //         type="button"
-  //         icon="pi pi-file-excel"
-  //         size="large"
-  //         severity="success"
-  //         rounded
-  //         onClick={exportExcel}
-  //         data-pr-tooltip="XLS"
-  //         tooltip="Export to XLS"
-  //       />
-  //       <Button
-  //         type="button"
-  //         icon="pi pi-file-pdf"
-  //         size="large"
-  //         severity="warning"
-  //         rounded
-  //         onClick={exportPdf}
-  //         data-pr-tooltip="PDF"
-  //         tooltip="Export to PDF"
-  //       />
-  //     </div>
-  //   </div>
-  // );
+  if (isPending) return <CategoryListSekeleton />;
+  if (error) return 'An error has occurred: ' + error.message;
 
   return (
-    <div>
-      <TableThree />
-    </div>
+    <>
+      <div
+        className="w-full h-full pb-6 sm:overflow-x-auto"
+        id="table-container"
+      >
+        <div className="flex flex-col md:flex-row mx-4 justify-between mb-2">
+          <div className="font-bold text-navy-700 dark:text-gray-100">
+            Daftar kategori produk
+          </div>
+          <div>
+            <Breadcrumb pageName="List Kategori produk" />
+          </div>
+        </div>
+        <div className="overflow-x-scroll xl:overflow-x-hidden">
+          <TableContainer
+            datas={data}
+            columns={columns}
+            TableName="Kategori Produk"
+            tableClass="w-full"
+            theadClass="table-light"
+            handleAddModalOpen={handleAddModalOpen}
+            isDownload={false}
+          />
+        </div>
+      </div>
+      {addModalOpen && (
+        <AddCategoryProductModal
+          handleAddModalClose={handleAddModalClose}
+          addModalOpen={addModalOpen}
+        />
+      )}
+      {viewModalOpen && (
+        <ViewCategoryProductModal
+          handleViewModalClose={handleViewModalClose}
+          viewModalOpen={viewModalOpen}
+          selectedCategoryProduct={selectedCategoryProduct}
+        />
+      )}
+      {editModalOpen && (
+        <EditCategoryProductModal
+          handleEditModalClose={handleEditModalClose}
+          editModalOpen={editModalOpen}
+          selectedCategoryProduct={selectedCategoryProduct}
+        />
+      )}
+      {deleteModalOpen && (
+        <ModalConfirmation
+          deleteModalOpen={deleteModalOpen}
+          handleDeleteClose={handleDeleteClose}
+          idCategory={idCategory}
+        />
+      )}
+    </>
   );
-}
+};
+
+export default CategoryProductList;

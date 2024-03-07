@@ -84,8 +84,12 @@ const DropdownUser = ({ profile }) => {
           </span>
         </span>
 
-        <span className="h-10 w-10 rounded-full">
-          <img src={imageSrc} alt="User" />
+        <span>
+          <img
+            src={imageSrc}
+            alt="profile_picture.jpg"
+            className="rounded-full w-10 h-10"
+          />
         </span>
       </Link>
 
@@ -105,7 +109,16 @@ const DropdownUser = ({ profile }) => {
               className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
             >
               <RiUser3Line className="w-5 h-5" />
-              Data profil
+              Profil pengguna
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/pengaturan"
+              className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+            >
+              <RiSettings4Line className="w-5 h-5" />
+              Pengaturan
             </Link>
           </li>
           <li>
@@ -115,15 +128,6 @@ const DropdownUser = ({ profile }) => {
             >
               <RiContactsBookLine className="w-5 h-5" />
               Data Kontak
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/pages/settings"
-              className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
-            >
-              <RiSettings4Line className="w-5 h-5" />
-              Pengaturan
             </Link>
           </li>
         </ul>

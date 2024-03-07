@@ -6,8 +6,12 @@ import { set } from 'store/Local/Forage';
 import toast from 'react-hot-toast';
 import { useProfileStore } from 'store/Profile/StoreProfile';
 import backgroundAuth from '../../assets/img/avatars/background.png';
+import { useQuery } from '@tanstack/react-query';
+import { useAuthValidation, useAuthCheck } from 'store/Auth/customHooks';
 
-const SignIn = () => {
+const SignIn = ({ authToken }) => {
+  // const { isValid } = useAuthCheck(authToken);
+
   const navigate = useNavigate();
   const { setProfile } = useProfileStore();
   const [rememberMe, setRememberMe] = useState(false);
@@ -20,6 +24,19 @@ const SignIn = () => {
     email: savedEmail,
     password: savedPassword,
   });
+
+  const { data: sessionData, error: sessionError } = useQuery({
+    queryKey: ['sessionData'],
+    queryFn: async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error fetching session:', error.message);
+        throw new Error('Error fetching session');
+      }
+      return data;
+    },
+  });
+  console.log('sessionData', sessionData);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -38,9 +55,14 @@ const SignIn = () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
+    // if (data) {
+    //   window.location.href = '/dashboard';
+    // }
     if (error) {
       alert('failed to login');
     }
+    console.log('data', data);
+    // toast.success('Login Berhasil. Silahkan tungukan akun anda. Terima kasih');
   };
 
   const handleSignInWithEmailPassword = async (e) => {
@@ -197,11 +219,9 @@ const SignIn = () => {
             <button
               type="button"
               className="w-[325px] md:w-full md:px-14 bg-white hover:bg-gray-100 focus:bg-gray-100 text-gray-900 font-semibold rounded-lg py-3 border border-gray-300"
+              onClick={handleLoginWithGoogle}
             >
-              <div
-                className="flex items-center justify-center"
-                onClick={handleLoginWithGoogle}
-              >
+              <div className="flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   x="0px"

@@ -25,6 +25,11 @@ export const routes = [
         name: 'List Produk',
         path: 'product-list',
       },
+      {
+        layout: '/',
+        name: 'Stok Produk',
+        path: 'stock-product',
+      },
     ],
   },
 ];

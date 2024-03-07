@@ -1,25 +1,56 @@
 import { useState, useEffect } from 'react';
+import { MdClose, MdEdit } from 'react-icons/md';
 import Select from 'react-select';
-import { MdClose, MdAdd } from 'react-icons/md';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import supabase from 'config/supabaseClient';
 import toast from 'react-hot-toast';
-import { useQueryClient } from '@tanstack/react-query';
+import { v4 as uuidv4 } from 'uuid';
 
-const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
+const CDNURL =
+  'https://nhlaxvquhtucrcblxlej.supabase.co/storage/v1/object/public/jajanian/product/';
+
+const EditProductModal = ({
+  handleEditModalClose,
+  editModalOpen,
+  selectedProduct,
+}) => {
+  console.log('selectedProduct', selectedProduct);
   const queryClient = useQueryClient();
   const [options, setOptions] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [imageBase64, setImageBase64] = useState(null);
+  const [isImageChanged, setImageChanged] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState({
-    product_name: '',
-    price: '',
-    promo: '',
-    original_price: '',
-    description: '',
+    category_id: selectedProduct.category_id.category_id,
+    product_name: selectedProduct.product_name,
+    image_base64: selectedProduct.image_base64,
+    price: selectedProduct.price,
+    promo: selectedProduct.promo,
+    original_price: selectedProduct.original_price,
+    description: selectedProduct.description,
   });
+
+  useEffect(() => {
+    // const { isPending, error, data } = useQuery({
+    //   queryKey: ['productImage'],
+    //   queryFn: async () => {
+    const fetchImage = async () => {
+      const { data, error } = await supabase.storage
+        .from('jajanian')
+        .list('product/' + selectedProduct.product_id + '/', {
+          limit: 100,
+          offset: 0,
+          sortBy: { column: 'name', order: 'asc' },
+        });
+      setImagePreview(data);
+      setImageChanged(true);
+      return data;
+    };
+    fetchImage();
+    //   },
+    // });
+  }, []);
 
   useEffect(() => {
     const fetchCategory = async () => {
@@ -33,13 +64,16 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
       }));
       setOptions(formattedOptions);
     };
-    setIsLoading(true);
     fetchCategory();
-  }, [isLoading]);
+  }, []);
 
   const handleSelectChange = (selected) => {
-    setSelectedCategory(selected);
-    setSelectedCategoryId(selected.value);
+    setFormData((prevData) => ({
+      ...prevData,
+      category_id: selected
+        ? selected.value
+        : selectedProduct.category_id.category_id,
+    }));
   };
 
   const handleImageChange = async (file) => {
@@ -64,6 +98,21 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
     reader.readAsDataURL(file);
   };
 
+  async function uploadImage(e) {
+    let file = e.target.files[0];
+    const { data, error } = await supabase.storage
+      .from('jajanian')
+      .upload('product/' + selectedProduct.product_id + '/' + uuidv4(), file);
+    if (data) {
+      getImages();
+    } else {
+      console.log(error);
+    }
+  }
+
+  console.log('data', imagePreview);
+  console.log('editModalOpen', editModalOpen);
+
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -76,9 +125,35 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
     e.preventDefault();
   };
 
-  const handleDeleteImage = () => {
-    setImageBase64(null);
-    setImagePreview(null);
+  const image_new = null;
+
+  const handleDeleteImage = async (e) => {
+    e.preventDefault();
+    try {
+      if (imagePreview || imageBase64) {
+        setImageBase64(null);
+        setImagePreview(null);
+        queryClient.invalidateQueries({ queryKey: ['productData'] });
+      } else {
+        const { error } = await supabase
+          .schema('product')
+          .from('products')
+          .update({ image_base64: image_new })
+          .eq('product_id', selectedProduct.product_id);
+        setFormData({
+          image_base64: null,
+        });
+        setImageBase64(null);
+        setImagePreview(null);
+        toast.success('Foto produk berhasil dihapus');
+        queryClient.invalidateQueries({ queryKey: ['productData'] });
+        if (error) {
+          toast.error('gagal menghapus foto produk');
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleChange = (e) => {
@@ -86,35 +161,35 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleEditProduct = async (e) => {
     e.preventDefault();
     try {
-      setIsLoading(true);
       const { data } = await supabase
         .schema('product')
         .from('products')
-        .insert({
+        .update({
           product_name: formData.product_name,
-          category_id: selectedCategoryId,
+          category_id: formData.category_id,
           price: formData.price,
           description: formData.description,
-          image_base64: imageBase64,
+          image_base64: imageBase64 || formData.image_base64,
           promo: formData.promo,
           original_price: formData.original_price,
-        });
-      toast.success('Produk berhasil ditambahkan');
-      setIsLoading(false);
+        })
+        .eq('product_id', selectedProduct.product_id);
+      toast.success('Produk berhasil diupdate');
       queryClient.invalidateQueries({ queryKey: ['productData'] });
-      handleAddModalClose();
+      handleEditModalClose();
       return data;
     } catch (error) {
-      console.error('Error:', error);
+      console.error(error);
     }
   };
 
   return (
     <>
-      {addModalOpen && (
+      {/* Main modal */}
+      {editModalOpen && (
         <div
           id="crud-modal"
           tabIndex="-1"
@@ -125,29 +200,36 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
             <div className="relative bg-white rounded-lg shadow dark:bg-gray-700 max-h-screen overflow-y-auto">
               <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Add produk
+                  Edit produk
                 </h3>
                 <button
                   className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                  onClick={handleAddModalClose}
+                  onClick={handleEditModalClose}
                 >
                   <MdClose className="w-5 h-5" />
                   <span className="sr-only">Close modal</span>
                 </button>
               </div>
-              <form className="p-4 md:p-5" onSubmit={handleSubmit}>
+              {/* Modal body */}
+              <form className="p-4 md:p-5" onSubmit={handleEditProduct}>
                 <div className="grid gap-4">
                   <div className="grid gap-4">
                     <div className="col-span-2">
                       <label
                         htmlFor="name"
+                        name="name"
                         className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                       >
                         Pilih kategori
                       </label>
                       <Select
+                        id="category"
                         name="category"
-                        value={selectedCategory}
+                        value={options.find(
+                          (option) =>
+                            option.value ===
+                            selectedProduct.category_id.category_id,
+                        )}
                         onChange={handleSelectChange}
                         options={options}
                       />
@@ -172,7 +254,7 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
                     </div>
                     <div className="col-span-2">
                       <label
-                        htmlFor="Upload File"
+                        htmlFor="UploadFile"
                         className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                       >
                         Pilih Image
@@ -187,7 +269,9 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
                           handleImageChange(e.target.files[0]);
                         }}
                       />
-                      {!imagePreview && (
+                      {(selectedProduct.image_base64 === null ||
+                        imagePreview ||
+                        formData.image_base64 === null) && (
                         <div className="items-center justify-center w-full hidden md:block">
                           <label
                             htmlFor="dropzone-file"
@@ -215,9 +299,9 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
                               </svg>
                               <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                                 <span className="font-semibold">
-                                  Klik untuk upload
+                                  Drag and drop
                                 </span>{' '}
-                                atau drag dan drop
+                                Untuk upload file image
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
                                 hanya dapat upload SVG, PNG, JPG atau GIF (MAX.
@@ -227,22 +311,23 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
                             <input
                               id="dropzone-file"
                               type="file"
-                              name="image"
                               accept=".png, .jpg, .jpeg, .svg"
                               className="hidden"
                             />
                           </label>
                         </div>
                       )}
-                      {imagePreview && (
+                      {(formData?.image_base64 || imagePreview) && (
                         <div className="mt-4 col-span-2 w-[150px] h-[150px">
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             Image Preview
                           </p>
                           <div className="relative">
                             <img
-                              src={imagePreview}
-                              alt="Preview"
+                              src={`data:image/png;base64,${
+                                imageBase64 || formData.image_base64
+                              }`}
+                              alt="Preview.jpg"
                               className="mt-2 rounded-lg max-w-full h-auto"
                             />
                             <button
@@ -333,8 +418,8 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
                       type="submit"
                       className="flex bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-2 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                     >
-                      <MdAdd className="w-5 h-5 mr-1" />
-                      Tambah produk
+                      <MdEdit className="w-5 h-5 mr-1" />
+                      Edit produk
                     </button>
                   </div>
                 </div>
@@ -347,4 +432,4 @@ const AddProductModal = ({ handleAddModalClose, addModalOpen }) => {
   );
 };
 
-export default AddProductModal;
+export default EditProductModal;

@@ -59,9 +59,8 @@ export const useAuthCheck = () => {
         const { data, error } = await supabase.auth.getSession();
         console.log('sesi login', data);
         if (error) throw new Error(error.message);
-        if (data) {
-          setIsValid(data);
-          // navigate("/home");
+        if (data && data.session !== null) {
+          navigate('/dashboard');
         }
       } catch (error) {
         toast.error('Token Kadaluarsa, silahkan login kembali', {
@@ -72,8 +71,6 @@ export const useAuthCheck = () => {
     };
     checkAuth();
   }, [navigate]);
-
-  console.log('isValid', isValid);
   return isValid;
 };
 

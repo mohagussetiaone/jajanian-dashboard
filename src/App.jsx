@@ -15,7 +15,11 @@ import { Toaster } from 'react-hot-toast';
 import Dashboard from 'views/Dashboard';
 import CategoryProduct from 'views/Products/Category';
 import ProductList from 'views/Products/Product';
+import EditProduct from 'views/Products/Product/components/EditProduct';
+import AddProduct from 'views/Products/Product/components/AddProduct';
+import StockProduct from 'views/Products/Stock';
 import Profile from 'views/Profile';
+import Settings from 'views/Settings';
 import Layout from './layouts/layouts';
 
 // Auth
@@ -57,6 +61,38 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: '/add-product',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <EditProduct authToken={authToken} />;
+        },
+      },
+      {
+        path: '/product/add',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <AddProduct authToken={authToken} />;
+        },
+      },
+      {
+        path: '/product/edit/:id',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <EditProduct authToken={authToken} />;
+        },
+      },
+      {
+        path: '/stock-product',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <StockProduct authToken={authToken} />;
+        },
+      },
+      {
         path: '/profile',
         loader: authLoader,
         Component() {
@@ -64,14 +100,14 @@ const router = createBrowserRouter([
           return <Profile authToken={authToken} />;
         },
       },
-      // {
-      //   path: '/product-list-sekeleton',
-      //   loader: authLoader,
-      //   Component() {
-      //     const { authToken } = useLoaderData();
-      //     return <ProductListSekeleton authToken={authToken} />;
-      //   },
-      // },
+      {
+        path: '/pengaturan',
+        loader: authLoader,
+        Component() {
+          const { authToken } = useLoaderData();
+          return <Settings authToken={authToken} />;
+        },
+      },
     ],
   },
   {
@@ -133,10 +169,10 @@ export default function App() {
           }}
         />
         <RouterProvider router={router} />
-        {/* <ReactQueryDevtools
+        <ReactQueryDevtools
           initialIsOpen={false}
           buttonPosition="bottom-left"
-        /> */}
+        />
       </QueryClientProvider>
     </>
   );

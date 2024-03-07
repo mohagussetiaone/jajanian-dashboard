@@ -5,6 +5,7 @@ import useToggleSidebar from 'store/toggleSidebar';
 import SidebarLinks from './components/Links.jsx';
 import LogoJajanian from 'assets/logo/Jajanian.png';
 import { HiArrowLeft, HiChevronRight } from 'react-icons/hi';
+import Card from '../../components/Card/index';
 
 const determineInitialSidebarState = () => {
   return window.innerWidth > 1024;
@@ -60,7 +61,7 @@ const index = ({ open, onClose }) => {
         variants={sidebarVariants}
         transition={{ duration: 0.225, ease: 'linear' }}
       >
-        <div className="sticky top-0 -ml-1">
+        <Card extra="sticky top-0 -ml-1 dark:border-gray-800">
           <div className="flex flex-col min-h-screen justify-between">
             <div>
               <div className="ml-9 md:ml-7 xl:ml-10 flex items-center justify-between py-6">
@@ -94,7 +95,7 @@ const index = ({ open, onClose }) => {
                   </span>
                 </AnimatePresence>
               </div>
-              <hr className="mb-4 dark:border-gray-50" />
+              <hr className="mb-4 dark:border-gray-600" />
               <ul className={`mb-auto pt-1 ${isSidebarOpen && 'mr-45'}`}>
                 <SidebarLinks
                   routes={routes}
@@ -111,7 +112,7 @@ const index = ({ open, onClose }) => {
               </AnimatePresence>
             </div>
           </div>
-        </div>
+        </Card>
       </motion.div>
     </>
   );

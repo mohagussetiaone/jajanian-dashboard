@@ -5,7 +5,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import toast, { Toaster } from 'react-hot-toast';
 
 const ModalConfirmation = ({
-  idProduct,
+  idCategory,
   deleteModalOpen,
   handleDeleteClose,
 }) => {
@@ -16,14 +16,14 @@ const ModalConfirmation = ({
     try {
       const { error } = await supabase
         .schema('product')
-        .from('products')
+        .from('categories')
         .delete()
-        .eq('product_id', idProduct);
+        .eq('category_id', idCategory);
       handleDeleteClose();
-      toast.success('Produk Berhasil dihapus');
-      queryClient.invalidateQueries({ queryKey: ['productData'] });
+      toast.success('Kategori produk Berhasil dihapus');
+      queryClient.invalidateQueries({ queryKey: ['categoryProductData'] });
       if (error) {
-        toast.error('Produk gagal dihapus');
+        toast.error('Kategori produk gagal dihapus');
         console.error(error);
       }
     } catch (error) {
@@ -64,7 +64,7 @@ const ModalConfirmation = ({
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Apakah kamu yakin akan menghapus produk?
+                    Apakah kamu yakin akan menghapus kategori produk?
                   </Dialog.Title>
                   <div className="mt-10 flex justify-center gap-4">
                     <button

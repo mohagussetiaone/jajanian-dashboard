@@ -4,6 +4,7 @@ import { routes } from '../routes';
 import Sidebar from 'components/Sidebar';
 import Header from 'components/Header';
 import Footer from 'components/footer';
+import Card from 'components/Card';
 
 export default function Layout(props) {
   const location = useLocation();
@@ -48,7 +49,7 @@ export default function Layout(props) {
   return (
     <div className="max-w-screen flex h-full">
       <Sidebar open={open} onClose={() => setOpen(!open)} />
-      <div className="h-full w-full bg-lightPrimary dark:bg-navy-900">
+      <Card extra="h-full w-full">
         <main className={`h-full flex-none transition-all md:px-1`}>
           <div className="h-full">
             <Header
@@ -61,7 +62,7 @@ export default function Layout(props) {
             <Footer />
           </div>
         </main>
-      </div>
+      </Card>
     </div>
   );
 }

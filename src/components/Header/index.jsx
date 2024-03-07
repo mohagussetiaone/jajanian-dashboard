@@ -1,53 +1,55 @@
-import { useState, useEffect } from 'react';
-import supabase from 'config/supabaseClient';
 import DropdownMessage from './DropdownMessage';
 import DropdownNotification from './DropdownNotification';
 import DropdownUser from './DropdownUser';
 import DarkModeSwitcher from './DarkModeSwitcher';
 import { IoMdSearch } from 'react-icons/io';
 import { HiMenu } from 'react-icons/hi';
+import supabase from 'config/supabaseClient';
 import { useProfileStore } from 'store/Profile/StoreProfile';
+import { useQuery } from '@tanstack/react-query';
 
 const Header = ({ onOpenSidenav }) => {
   const { profile, setProfile } = useProfileStore();
 
-  useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error fetching session:', error.message);
-          return;
-        }
-        if (data) {
-          getProfile(data?.session?.user?.id);
-        }
-      } catch (error) {
-        console.error('Error in fetchSession:', error);
+  const { data: sessionData, error: sessionError } = useQuery({
+    queryKey: ['sessionData'],
+    queryFn: async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error fetching session:', error.message);
+        throw new Error('Error fetching session');
       }
-    };
-    fetchSession();
-  }, []);
+      return data;
+    },
+  });
 
-  const getProfile = async (id) => {
-    try {
+  console.log('sessionData', sessionData);
+  console.log('sessionError', sessionError);
+
+  const { error: profileError } = useQuery({
+    queryKey: ['profileData'],
+    queryFn: async () => {
       const { data } = await supabase
         .schema('users')
         .from('users')
         .select('*')
-        .eq('id', id)
+        .eq('id', sessionData?.session?.user?.id)
         .single();
-      setProfile(data);
-    } catch (error) {
-      console.error(true);
-    }
-  };
+      if (data) {
+        setProfile(data);
+      }
+      return data;
+    },
+    enabled: !!sessionData,
+  });
 
-  console.log('data session', profile);
+  if (sessionError || profileError) {
+    console.error(sessionError || profileError);
+  }
 
   return (
     <header
-      className="sticky top-0 flex w-full bg-white drop-shadow-1 dark:bg-navy-800 dark:drop-shadow-none"
+      className="sticky top-0 flex w-full bg-white drop-shadow-1 dark:border-storkedark dark:bg-boxdark border-b border-gray-200 dark:border-gray-600"
       style={{ zIndex: 50 }}
     >
       <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
@@ -61,7 +63,7 @@ const Header = ({ onOpenSidenav }) => {
         </div>
         <div className="hidden sm:block">
           <form action="https://formbold.com/s/unique_form_id" method="POST">
-            <div className="relative bg-gray-100 dark:bg-navy-700 rounded-lg p-2">
+            <div className="relative bg-gray-100 dark:bg-navy-900 rounded-lg p-2">
               <button className="absolute left-0 top-1/2 -translate-y-1/2">
                 <IoMdSearch className="w-6 h-6 ml-2 text-gray-500" />
               </button>

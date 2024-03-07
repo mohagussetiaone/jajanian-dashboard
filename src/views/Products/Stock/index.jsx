@@ -1,9 +1,9 @@
-import ProductsList from './components/ProductsList';
+import StockProduct from './components/StockProducts';
 
 const index = () => {
   return (
     <>
-      <ProductsList />
+      <StockProduct />
     </>
   );
 };
