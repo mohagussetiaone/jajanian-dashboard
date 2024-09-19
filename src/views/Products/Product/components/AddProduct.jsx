@@ -10,28 +10,24 @@ import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 import ProductListSekeleton from './ProductListSekeleton';
+import { MdZoomOutMap } from 'react-icons/md';
 
-const AddProductModal = () => {
+const AddProduct = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [categoryValue, setCategoryValue] = useState([]);
   const [formData, setFormData] = useState({
     is_published: false,
   });
   const [idNextVal, setIdNexVal] = useState();
 
-  // options for select
-  const [isPublishedOptions] = useState([
-    { value: false, label: 'Tidak' },
-    { value: true, label: 'Ya' },
-  ]);
   // fetching last sequence
   const fetchSequence = async () => {
     const { data, error } = await supabase.rpc('get_last_product_id');
-    console.log('data sequence', data + 1);
     setIdNexVal(data + 1);
     if (error) {
       console.log(error);
@@ -60,7 +56,7 @@ const AddProductModal = () => {
 
   // handle select category
   const handleSelectChange = (selected) => {
-    console.log('selected', selected);
+    setCategoryValue(selected);
     setFormData((prevData) => ({
       ...prevData,
       category_id: selected && selected.value,
@@ -81,7 +77,6 @@ const AddProductModal = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
   // file upload
   const handleFileChange = (event) => {
     const files = event.target.files;
@@ -120,15 +115,11 @@ const AddProductModal = () => {
       toast.error(`Batas maksimum ukuran file adalah 2MB`);
       return;
     }
-    const { data, error } = await supabase.storage
+    const { error: errorUpload } = await supabase.storage
       .from('jajanian')
       .upload('product/' + idNextVal + '/' + uuidv4(), file);
-    if (data) {
-      console.log(`${file?.name} berhasil diupload`);
-      return data;
-    } else {
-      toast.error(`Error saat mengupload gambar ${file?.name}: ${error}`);
-      return null;
+    if (errorUpload) {
+      throw new Error(errorUpload);
     }
   };
   // Add new product
@@ -153,9 +144,9 @@ const AddProductModal = () => {
             description: formData.description,
             promo: formData.promo,
             original_price: formData.original_price,
-            is_published: formData.is_published,
+            is_published: false,
           });
-        toast.success('Produk berhasil diupdate');
+        toast.success('Produk berhasil ditambahkan');
         queryClient.invalidateQueries({ queryKey: ['productData'] });
         navigate('/product-list');
         return data;
@@ -164,6 +155,7 @@ const AddProductModal = () => {
       console.error(error);
     }
   };
+
   // editor wysiwyg
   const handleEditorChange = (event, editor) => {
     const data = editor.getData();
@@ -173,11 +165,11 @@ const AddProductModal = () => {
     }));
   };
 
-  if (isLoading) return <ProductListSekeleton />;
-
   function AddBack() {
     navigate(-1);
   }
+
+  if (isLoading) return <ProductListSekeleton />;
 
   return (
     <>
@@ -199,7 +191,7 @@ const AddProductModal = () => {
           <form onSubmit={handleAddProduct}>
             <div className="flex gap-10 pt-4">
               <div className="w-1/2">
-                <div>
+                <div className="mb-2">
                   <label
                     htmlFor="name"
                     name="name"
@@ -210,12 +202,12 @@ const AddProductModal = () => {
                   <Select
                     id="category"
                     name="category"
-                    value={formData.category_id}
+                    value={categoryValue}
                     onChange={handleSelectChange}
                     options={options}
                   />
                 </div>
-                <div>
+                <div className="mb-2">
                   <label
                     htmlFor="name"
                     className="block mb-2 text-sm font-medium text-gray-900  dark:text-white"
@@ -233,7 +225,7 @@ const AddProductModal = () => {
                     required
                   />
                 </div>
-                <div className="col-span-2 sm:col-span-1">
+                <div className="col-span-2 sm:col-span-1 mb-2">
                   <label
                     htmlFor="promo"
                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -251,7 +243,7 @@ const AddProductModal = () => {
                     required
                   />
                 </div>
-                <div className="col-span-2 sm:col-span-1">
+                <div className="col-span-2 sm:col-span-1 mb-2">
                   <label
                     htmlFor="promo"
                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -269,7 +261,7 @@ const AddProductModal = () => {
                     required
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-2 mb-2">
                   <label
                     htmlFor="original_price"
                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -285,30 +277,6 @@ const AddProductModal = () => {
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-boxdark dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                     placeholder="Masukkan harga asli"
                     required
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label
-                    htmlFor="original_price"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Publikasi
-                  </label>
-                  <Select
-                    id="is_published"
-                    name="is_published"
-                    value={isPublishedOptions.find(
-                      (option) => option.value === formData?.is_published,
-                    )}
-                    onChange={(selected) => {
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        is_published: selected
-                          ? selected.value
-                          : formData?.is_published,
-                      }));
-                    }}
-                    options={isPublishedOptions}
                   />
                 </div>
               </div>
@@ -393,4 +361,4 @@ const AddProductModal = () => {
   );
 };
 
-export default AddProductModal;
+export default AddProduct;

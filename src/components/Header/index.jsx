@@ -24,7 +24,6 @@ const Header = ({ onOpenSidenav }) => {
   });
 
   console.log('sessionData', sessionData);
-  console.log('sessionError', sessionError);
 
   const { error: profileError } = useQuery({
     queryKey: ['profileData'],
@@ -77,7 +76,6 @@ const Header = ({ onOpenSidenav }) => {
             </div>
           </form>
         </div>
-
         <div className="flex items-center gap-3 2xsm:gap-7">
           <ul className="flex items-center gap-2 2xsm:gap-4">
             <DarkModeSwitcher />

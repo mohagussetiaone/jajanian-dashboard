@@ -236,7 +236,7 @@ const Settings = () => {
                         type="text"
                         name="nama_lengkap"
                         id="nama_lengkap"
-                        value={formData.nama_lengkap || profile?.nama_lengkap}
+                        value={formData.nama_lengkap || profile?.fullname}
                         onChange={handleFormChange}
                         placeholder="Masukkan nama lengkap"
                       />
@@ -255,7 +255,7 @@ const Settings = () => {
                       type="text"
                       name="no_telepon"
                       id="no_telepon"
-                      value={formData.no_telepon || profile?.no_telepon}
+                      value={formData.no_telepon || profile?.phone}
                       onChange={handleFormChange}
                       placeholder="Masukkan Nomor telepon"
                     />

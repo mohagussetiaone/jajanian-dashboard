@@ -4,7 +4,6 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Toaster } from 'react-hot-toast';
 
 const ModalConfirmation = ({
-  CDNURL,
   id,
   modalImagePreview,
   imagePreview,
@@ -34,7 +33,9 @@ const ModalConfirmation = ({
           onMouseLeave={handleMouseLeave}
         >
           <img
-            src={`${CDNURL}/${id}/${imagePreview[selectedItem].name}`}
+            src={`${import.meta.env.VITE_CDN_UPLOAD_IMAGE}/${id}/${
+              imagePreview[selectedItem].name
+            }`}
             alt={`Image Preview ${selectedItem + 1}`}
             className={`w-[600px] max-w-lg h-[300px] object-cover rounded-lg shadow transition-transform duration-300 ${
               hovered ? 'transform scale-150' : ''
@@ -106,7 +107,9 @@ const ModalConfirmation = ({
                           onClick={() => showItem(index)}
                         >
                           <img
-                            src={`${CDNURL}/${id}/${file.name}`}
+                            src={`${
+                              import.meta.env.VITE_CDN_UPLOAD_IMAGE
+                            }/${id}/${file.name}`}
                             alt={`Thumbnail ${index + 1}`}
                             className="w-16 h-16 object-cover rounded-md"
                           />

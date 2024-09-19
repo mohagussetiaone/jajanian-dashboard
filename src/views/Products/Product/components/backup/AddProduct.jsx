@@ -8,29 +8,40 @@ import { useQueryClient } from '@tanstack/react-query';
 import supabase from 'config/supabaseClient';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ProductListSekeleton from './ProductListSekeleton';
 import { MdZoomOutMap } from 'react-icons/md';
-import ModalImageFull from './ModalImageFull';
 
-const EditProduct = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+const AddProductModal = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [productData, setProductData] = useState([]);
-  const [imagePreview, setImagePreview] = useState([]);
-  const [modalImagePreview, setModalImagePreview] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [formData, setFormData] = useState({
+    is_published: false,
+  });
   const [variants, setVariants] = useState([]);
   const [currentTag, setCurrentVariants] = useState('');
+  const [idNextVal, setIdNexVal] = useState();
 
+  // options for select
   const [isPublishedOptions] = useState([
     { value: false, label: 'Tidak' },
     { value: true, label: 'Ya' },
   ]);
-
+  // fetching last sequence
+  const fetchSequence = async () => {
+    const { data, error } = await supabase.rpc('get_last_product_id');
+    console.log('data sequence', data + 1);
+    setIdNexVal(data + 1);
+    if (error) {
+      console.log(error);
+    }
+    return data;
+  };
+  // fectch category
   const fetchCategory = async () => {
     setIsLoading(true);
     const { data } = await supabase
@@ -45,159 +56,161 @@ const EditProduct = () => {
     setIsLoading(false);
   };
 
-  const fetchImage = async () => {
-    const { data, error } = await supabase.storage
-      .from('jajanian')
-      .list('product/' + id + '/', {
-        limit: 100,
-        offset: 0,
-        sortBy: { column: 'name', order: 'asc' },
-      });
-    if (error) {
-      console.error(error);
-    }
-    setImagePreview(data);
-    return data;
-  };
-
-  const fetchVariant = async () => {
-    const { data, error } = await supabase
-      .schema('product')
-      .from('variant_product')
-      .select('variant_id, variant_name')
-      .eq('product_id', id);
-    if (error) {
-      console.error(error);
-      return;
-    }
-    const formattedData = data.map((variant) => ({
-      id: variant.variant_id,
-      variant_name: variant.variant_name,
-    }));
-    setVariants(formattedData);
-  };
-
-  const fetchImageById = async () => {
-    setIsLoading(true);
-    const { data } = await supabase
-      .schema('product')
-      .from('products')
-      .select(
-        `
-        product_id,
-        product_name,
-        category_id:categories(category_id, category_name),
-        price,
-        description,
-        promo,
-        original_price,
-        is_published,
-        created_at,
-        updated_at
-      `,
-      )
-      .eq('product_id', id);
-    const isPublishedValue =
-      typeof data[0]?.is_published === 'boolean'
-        ? data[0]?.is_published
-        : false;
-    setFormData({
-      category_id: data[0]?.category_id?.category_id || '',
-      product_name: data[0]?.product_name || '',
-      image_base64: data[0]?.image_base64 || '',
-      price: data[0]?.price || '',
-      promo: data[0]?.promo || '',
-      original_price: data[0]?.original_price || '',
-      description: data[0]?.description || '',
-      is_published: isPublishedValue,
-    });
-    setProductData(data[0]);
-    setIsLoading(false);
-    return data[0];
-  };
-
   useEffect(() => {
+    fetchSequence();
     fetchCategory();
-    fetchImage();
-    fetchImageById();
-    fetchVariant();
-  }, [id]);
+  }, []);
 
+  // handle select category
   const handleSelectChange = (selected) => {
+    console.log('selected', selected);
     setFormData((prevData) => ({
       ...prevData,
-      category_id: selected
-        ? selected.value
-        : productData?.category_id?.category_id,
+      category_id: selected && selected.value,
     }));
   };
+  // remove image
+  const handleRemoveImage = (index) => {
+    const newSelectedFiles = [...selectedFiles];
+    newSelectedFiles.splice(index, 1);
+    setSelectedFiles(newSelectedFiles);
 
-  const uploadImage = async (e) => {
-    e.preventDefault();
-    let file = e.target.files[0];
-    if (!file) {
-      toast.error('Tidak ada file yang dipilih');
-      return;
-    }
-    const maxSizeInBytes = 2 * 1024 * 1024;
-    if (file.size > maxSizeInBytes) {
-      toast.error('Ukuran file terlalu besar. Maksimal 2MB diizinkan.');
-      return;
-    }
-    const { data, error } = await supabase.storage
-      .from('jajanian')
-      .upload('product/' + productData.product_id + '/' + uuidv4(), file);
-    if (data) {
-      fetchImage();
-      toast.success('Gambar berhasil diupload');
-    } else {
-      console.error(error);
-    }
+    const newPreviewUrls = [...previewUrls];
+    newPreviewUrls.splice(index, 1);
+    setPreviewUrls(newPreviewUrls);
   };
-
-  const handleDeleteImage = async (imageName) => {
-    const { error } = await supabase.storage
-      .from('jajanian')
-      .remove(['product/' + productData.product_id + '/' + imageName]);
-    if (error) {
-      toast.error('Gagal menghapus gambar');
-    } else {
-      fetchImage();
-      toast.success('Gambar berhasil dihapus');
-    }
-  };
-
+  // handle change formData
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleEditProduct = async (e) => {
-    e.preventDefault();
-    try {
-      const { data } = await supabase
-        .schema('product')
-        .from('products')
-        .update({
-          product_name: formData.product_name,
-          category_id: formData.category_id,
-          price: formData.price,
-          description: formData.description,
-          promo: formData.promo,
-          original_price: formData.original_price,
-          is_published: formData.is_published,
-        })
-        .eq('product_id', productData.product_id);
-      toast.success('Produk berhasil diupdate');
-      queryClient.invalidateQueries({ queryKey: ['productData'] });
-      // navigate('/product-list');
-      window.location.href = '/product-list';
+  // file upload
+  const handleFileChange = (event) => {
+    const files = event.target.files;
+    const newFiles = Array.from(files);
+    const allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    const validatedFiles = newFiles.filter((file) => {
+      if (!allowedExtensions.test(file.name)) {
+        toast.error(`Hanya dapat mengupload extensi file jpg, jpeg atau png`);
+        return false;
+      }
+      if (file.size > maxSize) {
+        toast.error(`Batas maksimum ukuran file adalah 2MB`);
+        return false;
+      }
+      return true;
+    });
+    setSelectedFiles([...selectedFiles, ...validatedFiles]);
+    const newPreviewUrls = validatedFiles.map((file) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      return new Promise((resolve) => {
+        reader.onloadend = () => {
+          resolve(reader.result);
+        };
+      });
+    });
+    Promise.all(newPreviewUrls).then((urls) => {
+      setPreviewUrls([...previewUrls, ...urls]);
+    });
+  };
+
+  // Fungsi untuk menambahkan variant
+  const addVariant = () => {
+    if (currentTag.trim() !== '') {
+      setVariants((prevVariants) => [
+        ...prevVariants,
+        { variant_name: currentTag.trim(), variant_id: idNextVal },
+      ]);
+      setCurrentVariants('');
+    }
+  };
+
+  // Fungsi untuk menghapus variant
+  const removeVariant = (index) => {
+    setVariants((prevVariants) => {
+      const newVariants = [...prevVariants];
+      newVariants.splice(index, 1);
+      return newVariants;
+    });
+  };
+
+  console.log('variants', variants);
+
+  // upload image to supabase
+  const uploadImageToSupabase = async (file) => {
+    const maxSizeInBytes = 2 * 1024 * 1024;
+    if (file.size > maxSizeInBytes) {
+      toast.error(`Batas maksimum ukuran file adalah 2MB`);
+      return;
+    }
+    const { data, error: errorUpload } = await supabase.storage
+      .from('jajanian')
+      .upload('product/' + idNextVal + '/' + uuidv4(), file);
+    if (errorUpload) {
+      throw new Error(errorUpload);
+    }
+    if (data) {
+      console.log(`${file?.name} berhasil diupload`);
       return data;
+    } else {
+      toast.error(`Error saat mengupload gambar ${file?.name}: ${error}`);
+      return null;
+    }
+  };
+  // Add new product
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    if (!selectedFiles || selectedFiles?.length === 0) {
+      toast.error('Tidak ada file yang dipilih');
+      return;
+    }
+    try {
+      const imageUrls = await Promise.all(
+        selectedFiles?.map(uploadImageToSupabase),
+      );
+      if (imageUrls.every((url) => url !== null)) {
+        const { data } = await supabase
+          .schema('product')
+          .from('products')
+          .insert({
+            product_name: formData.product_name,
+            category_id: formData.category_id,
+            price: formData.price,
+            description: formData.description,
+            promo: formData.promo,
+            original_price: formData.original_price,
+            is_published: formData.is_published,
+          });
+        console.log('data product tercreate', data);
+        if (data !== null) {
+          const { error: variantError } = await supabase
+            .schema('product')
+            .from('variant_product')
+            .insert([
+              {
+                product_id: idNextVal,
+                variant_name:
+                  variants?.length > 0 ? variants[0]?.variant_name : '',
+              },
+            ]);
+          if (variantError) {
+            throw new Error(variantError);
+          }
+        }
+        toast.success('Produk berhasil diupdate');
+        queryClient.invalidateQueries({ queryKey: ['productData'] });
+        navigate('/product-list');
+        return data;
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
+  // editor wysiwyg
   const handleEditorChange = (event, editor) => {
     const data = editor.getData();
     setFormData((prevData) => ({
@@ -206,53 +219,11 @@ const EditProduct = () => {
     }));
   };
 
-  if (isLoading) return <ProductListSekeleton />;
-
-  const modalImageFullClose = () => {
-    setModalImagePreview(false);
-  };
-
-  function editBack() {
+  function AddBack() {
     navigate(-1);
   }
 
-  const addVariant = async (e) => {
-    e.preventDefault();
-    const trimmedTag = currentTag.trim();
-    if (trimmedTag !== '') {
-      try {
-        const { error } = await supabase
-          .schema('product')
-          .from('variant_product')
-          .insert([{ product_id: id, variant_name: trimmedTag }]);
-        if (error) {
-          console.error(error);
-          return;
-        }
-        fetchVariant();
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  };
-
-  const removeVariant = async (index) => {
-    const variantToRemove = variants[index];
-    if (!variantToRemove) {
-      console.error('Invalid index or variant not found.');
-      return;
-    }
-    const { data, error } = await supabase
-      .schema('product')
-      .from('variant_product')
-      .delete()
-      .eq('variant_id', variantToRemove.id);
-    if (error) {
-      console.error(error);
-      return;
-    }
-    fetchVariant();
-  };
+  if (isLoading) return <ProductListSekeleton />;
 
   return (
     <>
@@ -260,24 +231,24 @@ const EditProduct = () => {
         <div className="w-full bg-white rounded-lg dark:bg-boxdark">
           <div className="flex justify-between pb-3 border-b border-gray-300">
             <div className="flex">
-              <button className="mr-2" onClick={editBack}>
+              <button className="mr-2" onClick={AddBack}>
                 <MdArrowBack className="w-5 h-5" />
               </button>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Edit produk
+                Add produk
               </h3>
             </div>
             <div>
               <Breadcrumb pageName="List Produk" />
             </div>
           </div>
-          <form>
+          <form onSubmit={handleAddProduct}>
             <div className="flex gap-10 pt-4">
               <div className="w-1/2">
                 <div className="mb-2">
                   <label
-                    htmlFor="category"
-                    name="category"
+                    htmlFor="name"
+                    name="name"
                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                   >
                     Pilih kategori
@@ -285,18 +256,14 @@ const EditProduct = () => {
                   <Select
                     id="category"
                     name="category"
-                    value={
-                      options.find(
-                        (option) => option.value === formData.category_id,
-                      ) || null
-                    }
+                    value={formData.category_id}
                     onChange={handleSelectChange}
                     options={options}
                   />
                 </div>
                 <div className="mb-2">
                   <label
-                    htmlFor="product_name"
+                    htmlFor="name"
                     className="block mb-2 text-sm font-medium text-gray-900  dark:text-white"
                   >
                     Name
@@ -312,47 +279,41 @@ const EditProduct = () => {
                     required
                   />
                 </div>
-                <div className="col-span-2 mb-2">
-                  <div className="col-span-2 sm:col-span-1 flex gap-4">
-                    <div className="flex-1">
-                      <label
-                        htmlFor="price"
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        Harga sebelum promo
-                      </label>
-                      <input
-                        type="number"
-                        name="price"
-                        id="price"
-                        min={0}
-                        value={formData.price}
-                        onChange={handleChange}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-boxdark dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Masukkan harga sebelum promo"
-                        required
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label
-                        htmlFor="promo"
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        Promo
-                      </label>
-                      <input
-                        type="number"
-                        name="promo"
-                        id="promo"
-                        min={0}
-                        value={formData.promo}
-                        onChange={handleChange}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-boxdark dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder='Masukkan "0" jika tidak ada promo'
-                        required
-                      />
-                    </div>
-                  </div>
+                <div className="col-span-2 sm:col-span-1 mb-2">
+                  <label
+                    htmlFor="promo"
+                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Harga sebelum promo
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    id="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-boxdark dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                    placeholder="Masukkan harga sebelum promo"
+                    required
+                  />
+                </div>
+                <div className="col-span-2 sm:col-span-1 mb-2">
+                  <label
+                    htmlFor="promo"
+                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Promo
+                  </label>
+                  <input
+                    type="number"
+                    name="promo"
+                    id="promo"
+                    value={formData.promo}
+                    onChange={handleChange}
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-boxdark dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                    placeholder='Masukkan "0" jika tidak ada promo'
+                    required
+                  />
                 </div>
                 <div className="col-span-2 mb-2">
                   <label
@@ -365,7 +326,6 @@ const EditProduct = () => {
                     type="number"
                     name="original_price"
                     id="original_price"
-                    min={0}
                     value={formData.original_price}
                     onChange={handleChange}
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-boxdark dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
@@ -375,7 +335,7 @@ const EditProduct = () => {
                 </div>
                 <div className="col-span-2 mb-2">
                   <label
-                    htmlFor="is_published"
+                    htmlFor="original_price"
                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                   >
                     Publikasi
@@ -463,7 +423,10 @@ const EditProduct = () => {
               </div>
               <div className="w-1/2">
                 <div className="col-span-2">
-                  <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  <label
+                    htmlFor="description"
+                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
                     Product Description
                   </label>
                   <CKEditor
@@ -482,41 +445,36 @@ const EditProduct = () => {
                     </label>
                     <input
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-[4px] focus:ring-primary-600 focus:border-primary-600 block w-full px-2 py-1 mb-4 dark:bg-boxdark dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                      id="UploadFile"
+                      id="default_size"
                       type="file"
-                      name="UploadFile"
+                      name="image"
                       accept=".png, .jpg, .jpeg, .svg"
-                      onChange={uploadImage}
+                      onChange={handleFileChange}
                     />
                   </div>
                 </div>
-                {imagePreview.length > 0 && (
+                {previewUrls && previewUrls.length > 0 && (
                   <div className="mt-4 col-span-2 p-2 rounded-lg shadow flex flex-wrap">
                     <div className="flex flex-wrap justify-between w-full">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Image Preview
                       </p>
                       <div className="flex gap-3">
-                        <p className="text-sm">{imagePreview?.length} files</p>
-                        <MdZoomOutMap
-                          className="w-4 h-4 mt-[2px] cursor-pointer"
-                          onClick={() => setModalImagePreview(true)}
-                        />
+                        <p className="text-sm">{previewUrls?.length} files</p>
+                        <MdZoomOutMap className="w-4 h-4 mt-[2px]" />
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {imagePreview?.map((image, index) => (
+                      {previewUrls.map((url, index) => (
                         <div className="relative" key={index}>
                           <img
-                            src={`${
-                              import.meta.env.VITE_CDN_UPLOAD_IMAGE
-                            }/${id}/${image.name}`}
+                            src={url}
                             alt={`Preview_${index}.jpg`}
                             className="mt-2 rounded-lg max-w-[100px] h-auto"
                           />
                           <button
                             type="button"
-                            onClick={() => handleDeleteImage(image.name)}
+                            onClick={() => handleRemoveImage(index)}
                             className="absolute top-0 right-0 p-1 text-red-500 bg-gray-100 border-red-500 rounded-full hover:text-red-600 hover:bg-gray-50 focus:outline-none focus:ring-2 z-10"
                           >
                             <MdClose className="w-4 h-4" />
@@ -526,14 +484,13 @@ const EditProduct = () => {
                     </div>
                   </div>
                 )}
-                <div className="flex justify-end mt-6 text-white">
+                <div className="flex justify-end mt-4 text-white">
                   <button
                     type="submit"
                     className="flex bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-2 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                    onClick={handleEditProduct}
                   >
                     <MdEdit className="w-5 h-5 mr-1" />
-                    Edit produk
+                    Add produk
                   </button>
                 </div>
               </div>
@@ -541,16 +498,8 @@ const EditProduct = () => {
           </form>
         </div>
       </div>
-      {modalImagePreview && (
-        <ModalImageFull
-          id={id}
-          modalImagePreview={modalImagePreview}
-          imagePreview={imagePreview}
-          modalImageFullClose={modalImageFullClose}
-        />
-      )}
     </>
   );
 };
 
-export default EditProduct;
+export default AddProductModal;
